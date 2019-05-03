@@ -5,9 +5,11 @@
 
 
 RACHEL/CARLA
-- Decide if we need to store data in a DB 
+- Decide if we need to store data in a DB (both Carla & Rachel)
 - Cleaning the data
 	- How to deal with various violations
+	- Rachel to clean the Facilities and Evaluations tables
+	- Carla to clean the Violations and Enforcements tables
 - Merge data from different tables
 	- Which tables do we need?
 	- Creating features
@@ -17,9 +19,10 @@ RACHEL/CARLA
 
 ESTHER/DAVE
 - Models
-- Evaluations
+- Evaluations **remember to tie the metric to the "why" we are using that metric
 - Research the thme horizon for when EPA evaluations happen
 - Research how long it takes to fix a violation (within the data & in policy)
+- Do facilities know when they are going to be inspected?
 - Split data by time (training/test sets) - decide which dates
 - Export the final data as a table
 
