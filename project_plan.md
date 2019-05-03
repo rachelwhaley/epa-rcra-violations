@@ -7,13 +7,13 @@
 RACHEL/CARLA
 - Decide if we need to store data in a DB 
 - Cleaning the data
-	> How to deal with various violations
+	- How to deal with various violations
 - Merge data from different tables
-	> Which tables do we need?
-	> Creating features
-	> Selecting features
-	> Which features do we need?
-	> How to create variables?
+	- Which tables do we need?
+	- Creating features
+	- Selecting features
+	- Which features do we need?
+	- How to create variables?
 
 ESTHER/DAVE
 - Models
