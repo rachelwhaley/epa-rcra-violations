@@ -21,7 +21,6 @@ from sklearn.ensemble import BaggingClassifier
 from scipy import stats
 from plotnine import *
 import graphviz
-import donation_analysis as don
 import pylab as pl
 
 '''
@@ -72,8 +71,18 @@ def encode_column(col):
     
     return le.transform(col)
 
-def x_y_split(df):
-    return df.drop('date_posted'), df.iloc[:,-1]
+def x_y_split(data):
+    y = data.Y
+    x = data.drop('Y', axis=1)
+    return x, y
+
+def year_fixer(df, col):
+    for x in df[col]:
+        if x < 1970 and x > 1900:
+            x = 100 + x
+        if x < 1900:
+            x = 2000 + x
+    print(df[col])
 
 '''
 Classifiers
@@ -173,13 +182,13 @@ def big_board(windows, classifiers=classifiers,thresh=thresh):
     
     for i, period in enumerate(windows[:-1]):
         if i > 0:
-            a, b = don.x_y_split(period)
+            a, b = x_y_split(period)
             x = pd.concat([x, a], ignore_index=True, sort=False)
             y = pd.concat([y, b], ignore_index=True, sort=False)
         else:
-            x, y = don.x_y_split(period)
+            x, y = x_y_split(period)
         x = x.drop('date_posted', axis=1)
-        xt, yt = don.x_y_split(windows[i+1])
+        xt, yt = x_y_split(windows[i+1])
         xt = xt.drop('date_posted', axis=1)
         if 'logreg' in classifiers:
             rv.append(evaluate_logreg(x,y,xt,yt))
