@@ -31,11 +31,12 @@ def split_by_date(dates):
             begin_test = max_date + timedelta(days=1)
             end_train = max_date
             end_test = max_date
-            while min_date + timedelta(days=x) < begin_train:
+            while min_date < end_train:
                 end_test = begin_test - timedelta(days=1)
                 begin_test = end_test - timedelta(days=y)
                 end_train = begin_test - timedelta(days=1)
                 begin_train = end_train - timedelta(days=x)
-                all_dates.append([tuple([begin_train, end_train]),
-                    tuple([begin_test, end_test])])
+                train_dates = tuple([begin_train, end_train])
+                test_dates = tuple([begin_test, end_test])
+                all_dates.append([train_dates, test_dates])
     return all_dates
