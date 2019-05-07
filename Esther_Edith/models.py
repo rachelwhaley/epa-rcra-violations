@@ -46,19 +46,10 @@ N_ITER = [50, 100, 300, 500, 700, 1000]
 
 def training_models():
     '''
-    '''
-    models_lst = []
-    
-    #Set the value for all model types
-    models_lst += regression_svm_modeling()
-    models_lst += knn_modeling()
-    models_lst += forest_modeling()
-    models_lst += ada_boost_modeling()
-    models_lst += bagging_modeling()
-    models_lst += huber_modeling()
-    models_lst += bays_modeling()
-
-    return models_lst
+    '''    
+    return regression_svm_modeling() + knn_modeling() + forest_modeling() +\
+        ada_boost_modeling() + bagging_modeling() + huber_modeling() +\
+        bays_modeling()
 
 def bays_modeling():
     '''
