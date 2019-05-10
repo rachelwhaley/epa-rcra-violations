@@ -56,6 +56,9 @@ def yesno_to_binary(data_series):
 def tf_to_binary(data_series):
     return data_series.map(dict(t=1, f=0))
 
+def YN_to_binary(data_series):
+    return data_series.map(dict(Y=1, N=0))
+
 def int_to_binary(data_series, marker, valifyes, valifno):
     '''
     take a series of ints and return 1 if > marker, 0 if not
