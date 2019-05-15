@@ -8,7 +8,7 @@ keep a list of the dates we are going to use.
 import pandas as pd
 from datetime import datetime, timedelta
 
-def split_by_date(variable, features, data_df, date_col):
+def split_by_date(variable, data_df, date_col):
     '''
     Splits date range by dates
 
@@ -30,7 +30,7 @@ def split_by_date(variable, features, data_df, date_col):
             date_col, begin_train, end_train, begin_test, end_test))
     return all_dates
 
-def create_train_test(variable, features, data_df, date_col, begin_train,
+def create_train_test(variable, data_df, date_col, begin_train,
     end_train, begin_test, end_test):
     '''
     '''
@@ -45,11 +45,12 @@ def create_train_test(variable, features, data_df, date_col, begin_train,
         (data_df[date_col] <= end_test) &\
         (data_df[date_col] >= begin_test)
     test_data = df_all_data[test_filter]
-
+    
+    #We need to make the function that will get us our features
     train_variable = train_data[variable]
-    train_features = train_data[features]
+    train_features = get_features(train_data)
     test_variable = test_data[variable]
-    test_features = test_data[features]
+    test_features = get_features(test_data)
 
     return tuple([train_variable, train_features, test_variable, test_features,
         dates])
