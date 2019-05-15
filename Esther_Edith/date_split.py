@@ -8,35 +8,48 @@ keep a list of the dates we are going to use.
 import pandas as pd
 from datetime import datetime, timedelta
 
-def split_by_date(dates):
+def split_by_date(variable, features, data_df, date_col):
     '''
     Splits date range by dates
 
     Inputs:
-        dates: a tuple with the max and min values of the dates
     Outputs:
-        date_lst: a list of date tuples with the beginning and ending
-            dates for all of the training and testing splits
-    '''
-    max_date, min_date = dates
-    #Train on 6 months, 1 year, 18 monhts, 2 years, 3 years, 4 years, 5 years
-    training = [180, 365, 545, 730, 1095, 1460, 1825]
-    #Test on 6 months, 1 year, 18 months, 2 years
-    testing = [180, 365, 545, 730]
+    ''' 
+    time_series = data_df[date_col]
+    max_date = time_series.max()
+    #Even though we have more data, we are only going back 7 years
+    begin_train = max_date - timedelta(days=2555)
+    end_train = begin_train
     all_dates = []
 
-    for x in training:
-        for y in testing:
-            begin_train = max_date
-            begin_test = max_date + timedelta(days=1)
-            end_train = max_date
-            end_test = max_date
-            while min_date < end_train:
-                end_test = begin_test - timedelta(days=1)
-                begin_test = end_test - timedelta(days=y)
-                end_train = begin_test - timedelta(days=1)
-                begin_train = end_train - timedelta(days=x)
-                train_dates = tuple([begin_train, end_train])
-                test_dates = tuple([begin_test, end_test])
-                all_dates.append([train_dates, test_dates])
+    while max_date > end_test:
+        end_train = end_train + timedelta(days=365)
+        begin_test = end_train + timedelta(days=1)
+        end_test = begin_test + timedelta(days=365)
+        all_dates.append(create_train_test(variable, features, data_df,
+            date_col, begin_train, end_train, begin_test, end_test))
     return all_dates
+
+def create_train_test(variable, features, data_df, date_col, begin_train,
+    end_train, begin_test, end_test):
+    '''
+    '''
+    dates = str(begin_test) + " - " + str(end_test)
+
+    train_filter =\
+        (data_df[date_col] <= end_train) &\
+        (data_df[date_col] >= begin_train)
+    train_data = df_all_data[train_filter]
+
+    test_filter =\
+        (data_df[date_col] <= end_test) &\
+        (data_df[date_col] >= begin_test)
+    test_data = df_all_data[test_filter]
+
+    train_variable = train_data[variable]
+    train_features = train_data[features]
+    test_variable = test_data[variable]
+    test_features = test_data[features]
+
+    return tuple([train_variable, train_features, test_variable, test_features,
+        dates])

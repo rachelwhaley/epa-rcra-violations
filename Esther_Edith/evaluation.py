@@ -26,8 +26,7 @@ def fit_all(dates_lst, models_lst, variable, features, data_df, date_col):
 
     for dates_breakdown in date_lst:
         train_variable, train_features, test_variable, test_features, dates = \
-            create_train_test(dates_breakdown, variable, features, data_df,
-                date_col)
+            dates_breakdown
         for tup in models_lst:
             name, param, model = tup
             model = model.fit(train_features, train_variable)
@@ -46,31 +45,7 @@ def fit_all(dates_lst, models_lst, variable, features, data_df, date_col):
     
     return df_evaluated_models
 
-def create_train_test(dates_breakdown, variable, features, data_df, date_col):
-    '''
-    '''
-    train, test = dates_breakdown
-    begin_train, end_train = train
-    begin_test, end_test = test
 
-    dates = str(begin_test) + " - " + str(end_test)
-
-    train_filter =\
-        (data_df[date_col] <= end_train) &\
-        (data_df[date_col] >= begin_train)
-    train_data = df_all_data[train_filter]
-
-    test_filter =\
-        (data_df[date_col] <= end_test) &\
-        (data_df[date_col] >= begin_test)
-    test_data = df_all_data[test_filter]
-
-    train_variable = train_data[variable]
-    train_features = train_data[features]
-    test_variable = test_data[variable]
-    test_features = test_data[features]
-
-    return train_variable, train_features, test_variable, test_features, dates
 
 def testing(model, is_svm, test_variable, test_features):
     '''
