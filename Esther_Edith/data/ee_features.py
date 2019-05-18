@@ -13,19 +13,21 @@ def num_inspections(yr1, yr2=None):
     csv_name = 'RCRA_EVALUATIONS.csv'
     date = 'EVALUATION_START_DATE'
     ids = 'ID_NUMBER'
+    m = 'M'
+    d = 'D'
+    y = 'Y'
 
     df_ins = pd.read_csv(csv_name, usecols=[0,6])
-    df_ins[['M','D','Y']] = df_ins[date].str.split('/',expand=True)
-    df_ins['Y'] = df_ins['Y'].astype(dtype='int64')
-
+    df_ins[[m,d,y]] = df_ins[date].str.split('/',expand=True)
+    df_ins[y] = pd.to_numeric(df_ins['Y'], downcast='integer')
     if yr2 is not None:
         filt = \
-            (df_ins[date] <= yr1)&\
-            (df_ins[date] >= yr2)
+            (df_ins[y] <= yr1)&\
+            (df_ins[y] >= yr2)
     else:
-        filt = df_ins[date] <= yr1
+        filt = df_ins[y] <= yr1
     df_ins = df_ins[filt]
-    return df_ins.groupby(by=ids).value_counts()
+    return df_ins.groupby(by=ids).size()
 
 def corrective_event():
     '''
