@@ -8,8 +8,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score as accuracy
+from sklearn.metrics import precision_score as precision
+from sklearn.metrics import recall_score as recall
 import sys
-from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import precision_recall_curve, roc_curve, auc
 from scipy import stats
 
 def classify(x_train, y_train, x_test, classifier):
@@ -22,8 +24,7 @@ def classify(x_train, y_train, x_test, classifier):
         predicted_scores = model.decision_function(x_test)
     else:
         predicted_scores = model.predict_proba(x_test)[:, 1]
-    plt.hist(predicted_scores)
-    plt.save_fig()
+
     return predicted_scores
 
 def compare_to_threshold(score, threshold):
@@ -38,7 +39,7 @@ def compare_to_threshold(score, threshold):
         return 0
 
 def predict(scores, threshold):
-    l = list(stats.rankdata(scores, 'average')/len(self.scores))
+    l = list(stats.rankdata(scores, 'average')/len(scores))
     
     return [compare_to_threshold(x, threshold) for x in l]
 
@@ -62,3 +63,48 @@ class Classifier:
     
     def to_dict(self):
         return vars(self)
+    
+    def plot_precision_recall(self, save, name):
+        precision_curve, recall_curve, pr_thresholds = precision_recall_curve(
+        self.truth, self.scores)
+        precision_curve = precision_curve[:-1]
+        recall_curve = recall_curve[:-1]
+        pct_above_per_thresh = []
+        number_scored = len(self.scores)
+        for value in pr_thresholds:
+            num_above_thresh = len(self.scores[self.scores>=value])
+            pct_above_thresh = num_above_thresh / float(number_scored)
+            pct_above_per_thresh.append(pct_above_thresh)
+        pct_above_per_thresh = np.array(pct_above_per_thresh)
+
+        plt.clf()
+        fig, ax1 = plt.subplots()
+        ax1.plot(pct_above_per_thresh, precision_curve, 'b')
+        ax1.set_xlabel('percent of population')
+        ax1.set_ylabel('precision', color='b')
+        ax2 = ax1.twinx()
+        ax2.plot(pct_above_per_thresh, recall_curve, 'r')
+        ax2.set_ylabel('recall', color='r')
+        ax1.set_ylim([0,1])
+        ax2.set_xlim([0,1])
+
+        plt.title(name)
+        if save == True:
+            plt.savefig(name)
+        plt.show()
+
+    def plot_roc(self, save, name):
+        fpr, tpr, thresholds = roc_curve(self.truth, self.scores)
+        roc_auc = auc(fpr, tpr)
+        plt.clf()
+        plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
+        plt.plot([0, 1], [0, 1], 'k--')
+        plt.xlim([0.0, 1.05])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title(name)
+        plt.legend(loc="lower right")
+        if save == True:
+            plt.savefig(name)
+        plt.show()
