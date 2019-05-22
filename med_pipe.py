@@ -42,17 +42,22 @@ def predict(scores, threshold):
     
     return [compare_to_threshold(x, threshold) for x in l]
 
-class Classifier(model_type, parameters, threshold, x_train, y_train, x_test, y_test):
+class Classifier:
     '''
-    parameters is list of tuples with (parameter name, value)
-    order of arguments:
-    decision tree: criterion, splitter(keep at best), max_depth
-    knn: k, weights
-    bagging: base_estimator, n_estimators, n_features
+    model needs parameters passed to it before being loaded to class
+    class is intended to store all metrics of model applied to data in one place
     
     '''
-    self.classifier = model_type(*parameters)
-    self.scores = classify(x_train, y_train, x_test, self.classifier)
-    self.truth = y_test
-    self.predictions = list(stats.rankdata(self.scores, 'average')/len(self.scores))
-    self.accuracy = accuracy(self.truth, self.predictions)
+    def __init__(self, model, parameters, threshold, x_train, y_train,
+                 x_test, y_test):
+        self.classifier = model_type(*parameters)
+        self.scores = classify(x_train, y_train, x_test, self.classifier)
+        self.truth = y_test
+        self.predictions = predict(self.scores, threshold)
+        self.accuracy = accuracy(self.truth, self.predictions)
+        self.precision = precision(self.truth, self.predictions)
+        self.recall = recall(self.truth, self.predictions)
+        self.f1 = 2 * (self.precision * self.recall) / (self.precision + self.recall)
+    
+    def to_dict(self):
+        return vars(self)
