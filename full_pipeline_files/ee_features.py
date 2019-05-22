@@ -89,7 +89,7 @@ def corrective_event():
     df_ca = pd.read_csv(csv_name, usecols=[0,5])
     return df_ca
 
-def type_waste():
+def type_waste(df_all_data):
     '''
     Generates features based on the type of waste created
     
@@ -97,4 +97,18 @@ def type_waste():
     '''
     csv_name = 'Biennial_Report_GM_Waste_Code.csv'
     df_wc = pd.read_csv(csv_name, header=[0,6])
+    waste_codes = ''
+    zips = 'ZIP_CODE'
+    zips_unique = df_all_data[zips].unique()
+    ser = df_all_data[waste_codes]
+    val_unique = ser.unique()
+    
+    zips_info = []
+    
+    for val in val_unique:
+        new_col = 'waste code: ' + val
+        df_all_data[new_col] = df_all_data[waste_codes]\
+            .apply(lambda x: 1 if x == val else 0)
+        zips_info.append(df_all_data.groupby([zips])[new_col].sum())
+        
     return df_wc
