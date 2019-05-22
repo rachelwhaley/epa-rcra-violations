@@ -4,7 +4,53 @@ The Features Esther Edith is creating
 
 import pandas as pd
 
-def time_late(yr1, yr2)
+def time_late(date1, date2, df_all_data):
+    '''
+    Filter by zip codes
+
+    Filter by all facility ids
+    '''
+    #You can change these if need be
+    #I am assuming all of these will be in the df passed here
+    ids = 'ID_NUMBER'
+    date_to_split = 'ACTUAL_RTC_DATE'
+    actual = date_to_split
+    scheduled = 'SCHEDULED_COMPLIANCE_DATE'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    diff = 'difference'
+    early = 'early'
+    late = 'late'
+
+    #So this dictionary is going to give you wat to merge on, what the name
+    #of the feature column should be and the groupby object you can merge with
+    features = {ids: {}, zips: {}, states: {}}
+
+    df_all_data[diff] = df_all_data[actual] - df_all_data[scheduled]
+    df_all_data[early] = df_all_data[diff]\
+        .apply(lambda x: 0 if x.days > 0 else 1)
+    df_all_data[late] = df_all_data[diff]\
+        .apply(lambda x: 0 if x.days < 0 else 1)
+
+    filt_between =\
+        (df_all_data[date_to_split] <= date1) &\
+        (df_all_data[date_to_split] >= date2)
+    filt_before = (df_all_data[date_to_split] <= date1)
+    
+    df_between = df_all_data[filt_between]
+    df_before = df_all_data[filt_before]
+
+    for col in [early, late]:
+        for group in [ids, zips, states]:
+            for db_label in [(filt_between, " between"), (filt_before, " before")]:
+                db, label = db_label
+                name = "average time " + col + " for " + group + label
+                filt = db[col] == 1
+                our_db = db[filt]
+                features[group][name + ": avg"] = our_db.groupby([group])[diff].mean()
+                features[group][name + ": sum"] = our_db.groupby([group])[diff].sum()
+
+    return features
 
 def num_inspections(yr1, yr2=None):
     '''
