@@ -10,47 +10,20 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score as accuracy
 from sklearn.metrics import precision_score as precision
 from sklearn.metrics import recall_score as recall
-import sys
 from sklearn.metrics import precision_recall_curve, roc_curve, auc
 from scipy import stats
+import sys
 
-def classify(x_train, y_train, x_test, classifier):
-    '''
-    from rachel's pipeline_library
-    '''
-    model = classifier
-    model.fit(x_train, y_train)
-    if str(classifier).split('(')[0] == 'LinearSVC':
-        predicted_scores = model.decision_function(x_test)
-    else:
-        predicted_scores = model.predict_proba(x_test)[:, 1]
+#todo: make metrics methods that take thresholds as an argument
 
-    return predicted_scores
-
-def compare_to_threshold(score, threshold):
-    '''
-    takes threshold, temporarily aggregates data and comes up with score
-    that represents threshold% of population, then compares each score to that
-    adjusted threshold
-    '''
-    if score > threshold:
-        return 1
-    else:
-        return 0
-
-def predict(scores, threshold):
-    l = list(stats.rankdata(scores, 'average')/len(scores))
-    
-    return [compare_to_threshold(x, threshold) for x in l]
-
-class Classifier:
+class ClassifierAnalyzer:
     '''
     model needs parameters passed to it before being loaded to class
     class is intended to store all metrics of model applied to data in one place
-    
     '''
+    identifier = 0
     def __init__(self, model, threshold, x_train, y_train, x_test,
-                 y_test, name):
+                 y_test):
         self.model = model
         self.scores = classify(x_train, y_train, x_test, self.model)
         self.truth = y_test
@@ -59,11 +32,12 @@ class Classifier:
         self.precision = precision(self.truth, self.predictions)
         self.recall = recall(self.truth, self.predictions)
         self.f1 = 2 * (self.precision * self.recall) / (self.precision + self.recall)
-        self._type = name
-    
-    def to_dict(self):
-        return vars(self)
-    
+        self.id = identifier
+        ClassifierAnalyzer.identifier += 1
+
+    def __repr__(self):
+        return str(self.id)
+
     def plot_precision_recall(self, save, name):
         precision_curve, recall_curve, pr_thresholds = precision_recall_curve(
         self.truth, self.scores)
@@ -108,3 +82,32 @@ class Classifier:
         if save == True:
             plt.savefig(name)
         plt.show()
+
+def classify(x_train, y_train, x_test, classifier):
+    '''
+    from rachel's pipeline_library
+    '''
+    model = classifier
+    model.fit(x_train, y_train)
+    if str(classifier).split('(')[0] == 'LinearSVC':
+        predicted_scores = model.decision_function(x_test)
+    else:
+        predicted_scores = model.predict_proba(x_test)[:, 1]
+
+    return predicted_scores
+
+def compare_to_threshold(score, threshold):
+    '''
+    takes threshold, temporarily aggregates data and comes up with score
+    that represents threshold% of population, then compares each score to that
+    adjusted threshold
+    '''
+    if score > threshold:
+        return 1
+    else:
+        return 0
+
+def predict(scores, threshold):
+    l = list(stats.rankdata(scores, 'average')/len(scores))
+
+    return [compare_to_threshold(x, threshold) for x in l]
