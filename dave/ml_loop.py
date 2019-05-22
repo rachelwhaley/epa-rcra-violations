@@ -84,7 +84,7 @@ def define_clfs_params(grid_size):
         return 0, 0
 
 #run and analyze models
-def model_analyzer(clfs, grid, plots, x_train, y_train, x_test, y_test):
+def model_analyzer(clfs, grid, x_train, y_train, x_test, y_test):
     '''
     inputs: clfs dict of default models
             selected grid
@@ -101,17 +101,12 @@ def model_analyzer(clfs, grid, plots, x_train, y_train, x_test, y_test):
         parameter_values = grid[klass]
         for p in ParameterGrid(parameter_values):
             try:
-                model.set_params(**p)
                 name = klass + str(p)
-                m = mod.ClassifierAnalyzer(model, .2, )
+                m = mod.ClassifierAnalyzer(model, p, .2, x_train, y_train,
+                                          x_test, y_test)
                 result_df.concat(pd.DataFrame(vars(m)))
                 predictions_dict[m] = m.predictions
-                if plots == 'show':
-                    m.plot_precision_recall(False, str(m.id) + '.png')
-                    m.plot_roc(False, str(m.id) + '.png')
-                if plots == 'save':
-                    m.plot_precision_recall(True, str(m.id) + '.png')
-                    m.plot_roc(True, str(m.id) + '.png')
+
             except IndexError as e:
                     print('Error:',e)
                     continue

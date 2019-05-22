@@ -18,13 +18,13 @@ import sys
 
 class ClassifierAnalyzer:
     '''
-    model needs parameters passed to it before being loaded to class
+    CA takes a model and a set of parameters from
     class is intended to store all metrics of model applied to data in one place
     '''
     identifier = 0
-    def __init__(self, model, threshold, x_train, y_train, x_test,
+    def __init__(self, model, parameters, threshold, x_train, y_train, x_test,
                  y_test):
-        self.model = model
+        self.model = model.set_params(**parameters)
         self.scores = classify(x_train, y_train, x_test, self.model)
         self.truth = y_test
         self.predictions = predict(self.scores, threshold)
