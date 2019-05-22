@@ -27,10 +27,12 @@ def time_late(date1, date2, df_all_data):
     features = {ids: {}, zips: {}, states: {}}
 
     df_all_data[diff] = df_all_data[actual] - df_all_data[scheduled]
+    df_all_data[diff] = df_all_data[diff]\
+        .apply(lambda x: x.days)
     df_all_data[early] = df_all_data[diff]\
-        .apply(lambda x: 0 if x.days > 0 else 1)
+        .apply(lambda x: 0 if x > 0 else 1)
     df_all_data[late] = df_all_data[diff]\
-        .apply(lambda x: 0 if x.days < 0 else 1)
+        .apply(lambda x: 0 if x < 0 else 1)
 
     filt_between =\
         (df_all_data[date_to_split] <= date1) &\
