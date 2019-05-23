@@ -20,16 +20,18 @@ def time_late(date1, date2, df_all_data):
     states = 'STATE_CODE'
     loc = 'ACTIVITY_LOCATION'
     diff = 'difference'
-    early = 'early'
-    late = 'late'
+    early = 'early '
+    late = 'late '
+    between = ' between: ' + str(date2) + " - " + str(date1)
+    before = ' before: '+ str(date1)
 
     df_all_data[diff] = df_all_data[actual] - df_all_data[scheduled]
     df_all_data[diff] = df_all_data[diff]\
         .apply(lambda x: x.days)
     df_all_data[early] = df_all_data[diff]\
-        .apply(lambda x: 0 if x > 0 else 1)
+        .apply(lambda x: 0 if x >= 0 else 1)
     df_all_data[late] = df_all_data[diff]\
-        .apply(lambda x: 0 if x < 0 else 1)
+        .apply(lambda x: 0 if x <= 0 else 1)
 
     filt_between =\
         (df_all_data[date_to_split] <= date1) &\
@@ -40,20 +42,23 @@ def time_late(date1, date2, df_all_data):
     df_before = df_all_data[filt_before]
 
     for col in [early, late]:
-        for group in [ids, zips, states, loc]:
-            for db in [filt_between, filt_before]:
-                filt = db[col] == 1
-                our_db = db[filt]
-                avg = our_db.groupby(group)
+        for db_label in [(df_between, between), (df_before, before)]:
+            db, label = db_label
+            label = col + " " + label
+            filt = (db[col] == 1)
+            our_db = db[filt]
+            #for group in [ids, zips, states, loc]:
+            for group in [ids, loc]:
+                label += " " + group
+                avg = our_db.groupby(group)\
                     [diff].mean().reset_index().rename(\
-                    columns={diff:group+col+"avg"})
+                    columns={diff:label+" avg"})
                 sums = our_db.groupby(group)\
                     [diff].sum().reset_index().rename(\
-                    columns={diff:group+col+"sum"})
+                    columns={diff:label+" sum"})
                 count = our_db.groupby(group)\
                     [col].sum().reset_index().rename(\
-                    columns={col:group+col+"count"})
-
+                    columns={col:label+" count"})
                 for gb in [avg, sums, count]:
                     df_all_data = pd.merge(df_all_data, gb,\
                         on=group, how='left')
@@ -107,7 +112,7 @@ def type_waste(df_all_data):
     '''
     #csv_name = 'Biennial_Report_GM_Waste_Code.csv'
     #df_wc = pd.read_csv(csv_name, header=[0,6])
-    #I'm assuming the the three below columns will all be merged into the df
+    #I'm assuming the the three below columns will all be merged into the db
     waste_codes = 'Hazardous Waste Code'
     code_owner = 'Hazardous Waste Code Owner'
     naics = 'NAICS_CODE'
