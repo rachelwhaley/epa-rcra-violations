@@ -107,21 +107,24 @@ def type_waste(df_all_data):
     '''
     #csv_name = 'Biennial_Report_GM_Waste_Code.csv'
     #df_wc = pd.read_csv(csv_name, header=[0,6])
+    #I'm assuming the the three below columns will all be merged into the df
     waste_codes = 'Hazardous Waste Code'
     code_owner = 'Hazardous Waste Code Owner'
+    naics = 'NAICS_CODE'
     zips = 'ZIP_CODE'
-    ser = df_all_data[waste_codes]
-    val_unique = ser.unique()
-    
-    for col in [waste_codes, code_owner]:
+    states = 'STATE_CODE'
+    loc = 'ACTIVITY_LOCATION'
+
+    for col in [waste_codes, code_owner, naics]:
         ser = df_all_data[col]
         val_unique = ser.unique()
         for val in val_unique:
             new_col = col + val
             df_all_data[new_col] = df_all_data[waste_codes]\
                 .apply(lambda x: 1 if x == val else 0)
-            to_merge = df_all_data.groupby(zips)[new_col].sum()
-            df_all_data = pd.merge(df_all_data, to_merge, on=zips,how=left)
+            for group in [zips, states, loc]:
+                to_merge = df_all_data.groupby(group)[new_col].sum()
+                df_all_data = pd.merge(df_all_data, to_merge, on=zips,how=left)
         
     return df_all_data
 
