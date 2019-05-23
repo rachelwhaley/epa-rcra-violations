@@ -52,7 +52,7 @@ def time_late(date1, date2, df_all_data):
                     columns={diff:group+col+"sum"})
                 count = our_db.groupby(group)\
                     [col].sum().reset_index().rename(\
-                    columns={diff:group+col+"count"})
+                    columns={col:group+col+"count"})
 
                 for gb in [avg, sums, count]:
                     df_all_data = pd.merge(df_all_data, gb,\
@@ -60,30 +60,34 @@ def time_late(date1, date2, df_all_data):
 
     return df_all_data
 
-def num_inspections(yr1, yr2=None):
+def num_inspections(date1, date2, df_all_data):
     '''
     Generates features based on the number of inspections
     yr1: we want evaluations before this
     yr2: if we want to filter dates between two dates
     '''
-    csv_name = 'RCRA_EVALUATIONS.csv'
     date = 'EVALUATION_START_DATE'
     ids = 'ID_NUMBER'
-    m = 'M'
-    d = 'D'
-    y = 'Y'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    loc = 'ACTIVITY_LOCATION'
 
-    df_ins = pd.read_csv(csv_name, usecols=[0,6])
-    df_ins[[m,d,y]] = df_ins[date].str.split('/',expand=True)
-    df_ins[y] = pd.to_numeric(df_ins['Y'], downcast='integer')
-    if yr2 is not None:
-        filt = \
-            (df_ins[y] <= yr1)&\
-            (df_ins[y] >= yr2)
-    else:
-        filt = df_ins[y] <= yr1
-    df_ins = df_ins[filt]
-    return df_ins.groupby(by=ids).size()
+    filt_between =\
+        (df_all_data[date_to_split] <= date1) &\
+        (df_all_data[date_to_split] >= date2)
+    filt_before = (df_all_data[date_to_split] <= date1)
+    
+    df_between = df_all_data[filt_between]
+    df_before = df_all_data[filt_before]
+
+    for group in [ids, zips, states, loc]:
+        for db in [filt_between, filt_before]:
+            sums = db.groupby(group)\
+                .size().reset_index()
+            df_all_data = pd.merge(df_all_data, sums,\
+                on=group, how='left')
+
+    return df_all_data
 
 def corrective_event():
     '''
@@ -101,20 +105,33 @@ def type_waste(df_all_data):
     
     I NEED TO FIGURE OUT HOW TO HANDLE THE SIZE OF THIS FILE
     '''
-    csv_name = 'Biennial_Report_GM_Waste_Code.csv'
-    df_wc = pd.read_csv(csv_name, header=[0,6])
-    waste_codes = ''
+    #csv_name = 'Biennial_Report_GM_Waste_Code.csv'
+    #df_wc = pd.read_csv(csv_name, header=[0,6])
+    waste_codes = 'Hazardous Waste Code'
+    code_owner = 'Hazardous Waste Code Owner'
     zips = 'ZIP_CODE'
-    zips_unique = df_all_data[zips].unique()
     ser = df_all_data[waste_codes]
     val_unique = ser.unique()
     
-    zips_info = []
-    
-    for val in val_unique:
-        new_col = 'waste code: ' + val
-        df_all_data[new_col] = df_all_data[waste_codes]\
-            .apply(lambda x: 1 if x == val else 0)
-        zips_info.append(df_all_data.groupby([zips])[new_col].sum())
+    for col in [waste_codes, code_owner]:
+        ser = df_all_data[col]
+        val_unique = ser.unique()
+        for val in val_unique:
+            new_col = col + val
+            df_all_data[new_col] = df_all_data[waste_codes]\
+                .apply(lambda x: 1 if x == val else 0)
+            to_merge = df_all_data.groupby(zips)[new_col].sum()
+            df_all_data = pd.merge(df_all_data, to_merge, on=zips,how=left)
         
-    return df_wc
+    return df_all_data
+
+def num_facilities(df_all_data):
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    loc = 'ACTIVITY_LOCATION'
+
+    for group in [zips, states, loc]:
+        sums = db.groupby(group).size().reset_index()
+        df_all_data = pd.merge(df_all_data, sums, on=group, how='left')
+
+    return df_all_data  
