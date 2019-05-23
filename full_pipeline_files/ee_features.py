@@ -47,8 +47,7 @@ def time_late(date1, date2, df_all_data):
             label = col + " " + label
             filt = (db[col] == 1)
             our_db = db[filt]
-            #for group in [ids, zips, states, loc]:
-            for group in [ids, loc]:
+            for group in [ids, zips, states, loc]:
                 label += " " + group
                 avg = our_db.groupby(group)\
                     [diff].mean().reset_index().rename(\
