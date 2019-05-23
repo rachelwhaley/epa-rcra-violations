@@ -18,13 +18,10 @@ def time_late(date1, date2, df_all_data):
     scheduled = 'SCHEDULED_COMPLIANCE_DATE'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
+    loc = 'ACTIVITY_LOCATION'
     diff = 'difference'
     early = 'early'
     late = 'late'
-
-    #So this dictionary is going to give you wat to merge on, what the name
-    #of the feature column should be and the groupby object you can merge with
-    features = {ids: {}, zips: {}, states: {}}
 
     df_all_data[diff] = df_all_data[actual] - df_all_data[scheduled]
     df_all_data[diff] = df_all_data[diff]\
@@ -43,16 +40,25 @@ def time_late(date1, date2, df_all_data):
     df_before = df_all_data[filt_before]
 
     for col in [early, late]:
-        for group in [ids, zips, states]:
-            for db_label in [(filt_between, " between"), (filt_before, " before")]:
-                db, label = db_label
-                name = "average time " + col + " for " + group + label
+        for group in [ids, zips, states, loc]:
+            for db in [filt_between, filt_before]:
                 filt = db[col] == 1
                 our_db = db[filt]
-                features[group][name + ": avg"] = our_db.groupby([group])[diff].mean()
-                features[group][name + ": sum"] = our_db.groupby([group])[diff].sum()
+                avg = our_db.groupby(group)
+                    [diff].mean().reset_index().rename(\
+                    columns={diff:group+col+"avg"})
+                sums = our_db.groupby(group)\
+                    [diff].sum().reset_index().rename(\
+                    columns={diff:group+col+"sum"})
+                count = our_db.groupby(group)\
+                    [col].sum().reset_index().rename(\
+                    columns={diff:group+col+"count"})
 
-    return features
+                for gb in [avg, sums, count]:
+                    df_all_data = pd.merge(df_all_data, gb,\
+                        on=group, how='left')
+
+    return df_all_data
 
 def num_inspections(yr1, yr2=None):
     '''
