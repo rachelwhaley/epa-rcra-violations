@@ -14,7 +14,7 @@ def time_late(date1, date2, df_all_data):
         Total time early/late
 
         for a sinlg location
-        for all locations in a zip/state/activity location
+        for all locations in a zip/state
 
         within date ranges (date2 before date1)
         before date1
@@ -31,7 +31,6 @@ def time_late(date1, date2, df_all_data):
     scheduled = 'SCHEDULED_COMPLIANCE_DATE'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
-    loc = 'ACTIVITY_LOCATION'
     diff = 'difference'
     early = 'early '
     late = 'late '
@@ -60,7 +59,7 @@ def time_late(date1, date2, df_all_data):
             label = col + " " + label
             filt = (db[col] == 1)
             our_db = db[filt]
-            for group in [ids, zips, states, loc]:
+            for group in [ids, zips, states]:
                 label += " " + group
                 avg = our_db.groupby(group)\
                     [diff].mean().reset_index().rename(\
@@ -79,26 +78,34 @@ def time_late(date1, date2, df_all_data):
 
 def num_inspections(date1, date2, df_all_data):
     '''
+    !!!DONE!!!
+    Calculates:
+        Number of inspections
+        
+        for all locations in a zip/state
+
+        within date ranges (date2 before date1)
+        before date1
+
     Generates features based on the number of inspections
-    yr1: we want evaluations before this
-    yr2: if we want to filter dates between two dates
+    date1: we want evaluations before this
+    date2: if we want to filter dates between two dates
     '''
     date = 'EVALUATION_START_DATE'
     ids = 'ID_NUMBER'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
-    loc = 'ACTIVITY_LOCATION'
 
     filt_between =\
-        (df_all_data[date_to_split] <= date1) &\
-        (df_all_data[date_to_split] >= date2)
-    filt_before = (df_all_data[date_to_split] <= date1)
+        (df_all_data[date] <= date1) &\
+        (df_all_data[date] >= date2)
+    filt_before = (df_all_data[date] <= date1)
     
     df_between = df_all_data[filt_between]
     df_before = df_all_data[filt_before]
 
-    for group in [ids, zips, states, loc]:
-        for db in [filt_between, filt_before]:
+    for group in [ids, zips, states]:
+        for db in [df_between, df_before]:
             sums = db.groupby(group)\
                 .size().reset_index()
             df_all_data = pd.merge(df_all_data, sums,\
@@ -124,7 +131,7 @@ def type_waste(df_all_data):
         dummy variable for waste code/ code owner/ naics code
             for a single facility
         calculates all facilities with waste code/ code owner/ naics code
-            in a zip/state/activity location
+            in a zip/state
 
     Generates features based on the type of waste created
     '''
@@ -136,7 +143,6 @@ def type_waste(df_all_data):
     naics = 'NAICS_CODE'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
-    loc = 'ACTIVITY_LOCATION'
 
     for col in [waste_codes, code_owner, naics]:
         ser = df_all_data[col]
@@ -145,7 +151,7 @@ def type_waste(df_all_data):
             new_col = col + str(val)
             df_all_data[new_col] = df_all_data[waste_codes]\
                 .apply(lambda x: 1 if x == val else 0)
-            for group in [zips, states, loc]:
+            for group in [zips, states]:
                 to_merge = df_all_data.groupby(group)[new_col].sum()\
                     .reset_index()\
                     .rename(columns={new_col:new_col+group})
@@ -155,12 +161,15 @@ def type_waste(df_all_data):
     return df_all_data
 
 def num_facilities(df_all_data):
+    '''
+    !!!DONE!!!
+
+    Calculates:
+        Number of facilities in a zip code and state
+    '''
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
-    loc = 'ACTIVITY_LOCATION'
-
-    for group in [zips, states, loc]:
+    for group in [zips, states]:
         sums = df_all_data.groupby(group).size().reset_index()
         df_all_data = pd.merge(df_all_data, sums, on=group, how='left')
-
-    return df_all_data  
+    return df_all_data
