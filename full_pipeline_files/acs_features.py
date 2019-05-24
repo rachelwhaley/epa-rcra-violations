@@ -1,3 +1,11 @@
+from datetime import datetime
+import pandas as pd
+import matplotlib.pyplot as plt
+import geopandas as gpd
+from shapely.geometry import Point
+import acs_features
+from census_area import Census
+
 pd.options.mode.chained_assignment = None
 
 
@@ -32,7 +40,6 @@ def keep_miss_nonmiss(data, lst_feat):
     return miss_df, non_miss_df
 
 
-years = [2011, 2012, 2013, 2014, 2015, 2016]
 def get_acs_data(years, tuple_val):
     '''
     Gets ACS data 
