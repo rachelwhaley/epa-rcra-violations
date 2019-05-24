@@ -12,6 +12,7 @@ def time_late(date1, date2, df_all_data):
         Number of times early/late
         Average time early/late
         Total time early/late
+        Number of days since early/late
 
         for a sinlg location
         for all locations in a zip/state
@@ -70,7 +71,12 @@ def time_late(date1, date2, df_all_data):
                 count = our_db.groupby(group)\
                     [col].sum().reset_index().rename(\
                     columns={col:label+" count"})
-                for gb in [avg, sums, count]:
+                last = our_db.groupby(group)\
+                    [actual].max()\
+                    .apply(lambda x: (date1 - x).days)\
+                    .reset_index().rename(\
+                    columns={actual:"last " + label})
+                for gb in [avg, sums, count, last]:
                     df_all_data = pd.merge(df_all_data, gb,\
                         on=group, how='left')
 
@@ -104,12 +110,18 @@ def num_inspections(date1, date2, df_all_data):
     df_between = df_all_data[filt_between]
     df_before = df_all_data[filt_before]
 
-    for group in [ids, zips, states]:
+    #for group in [ids, zips, states]:
+    for group in [ids, 'ACTIVITY_LOCATION']:
         for db in [df_between, df_before]:
             sums = db.groupby(group)\
                 .size().reset_index()
-            df_all_data = pd.merge(df_all_data, sums,\
-                on=group, how='left')
+            last = db.groupby(group)\
+                [date].max()\
+                .apply(lambda x: (date1 - x).days)\
+                .reset_index()
+            for gb in [sums, last]:
+                df_all_data = pd.merge(df_all_data, gb,\
+                    on=group, how='left')
 
     return df_all_data
 
