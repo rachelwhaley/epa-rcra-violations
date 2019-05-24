@@ -6,6 +6,19 @@ import pandas as pd
 
 def time_late(date1, date2, df_all_data):
     '''
+    !!!DONE!!!
+
+    Calculates:
+        Number of times early/late
+        Average time early/late
+        Total time early/late
+
+        for a sinlg location
+        for all locations in a zip/state/activity location
+
+        within date ranges (date2 before date1)
+        before date1
+
     Filter by zip codes
 
     Filter by all facility ids
@@ -105,9 +118,15 @@ def corrective_event():
 
 def type_waste(df_all_data):
     '''
+    !!!DONE!!!
+
+    calculates:
+        dummy variable for waste code/ code owner/ naics code
+            for a single facility
+        calculates all facilities with waste code/ code owner/ naics code
+            in a zip/state/activity location
+
     Generates features based on the type of waste created
-    
-    I NEED TO FIGURE OUT HOW TO HANDLE THE SIZE OF THIS FILE
     '''
     #csv_name = 'Biennial_Report_GM_Waste_Code.csv'
     #df_wc = pd.read_csv(csv_name, header=[0,6])
@@ -117,19 +136,16 @@ def type_waste(df_all_data):
     naics = 'NAICS_CODE'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
-    #loc = 'ACTIVITY_LOCATION'
-    loc = 'Activity Location'
+    loc = 'ACTIVITY_LOCATION'
 
-    #for col in [waste_codes, code_owner, naics]:
-    for col in [waste_codes, code_owner]:
+    for col in [waste_codes, code_owner, naics]:
         ser = df_all_data[col]
         val_unique = ser.unique()
         for val in val_unique:
             new_col = col + str(val)
             df_all_data[new_col] = df_all_data[waste_codes]\
                 .apply(lambda x: 1 if x == val else 0)
-            #for group in [zips, states, loc]:
-            for group in [loc]:
+            for group in [zips, states, loc]:
                 to_merge = df_all_data.groupby(group)[new_col].sum()\
                     .reset_index()\
                     .rename(columns={new_col:new_col+group})
