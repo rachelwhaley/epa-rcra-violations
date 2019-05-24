@@ -117,18 +117,24 @@ def type_waste(df_all_data):
     naics = 'NAICS_CODE'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
-    loc = 'ACTIVITY_LOCATION'
+    #loc = 'ACTIVITY_LOCATION'
+    loc = 'Activity Location'
 
-    for col in [waste_codes, code_owner, naics]:
+    #for col in [waste_codes, code_owner, naics]:
+    for col in [waste_codes, code_owner]:
         ser = df_all_data[col]
         val_unique = ser.unique()
         for val in val_unique:
-            new_col = col + val
+            new_col = col + str(val)
             df_all_data[new_col] = df_all_data[waste_codes]\
                 .apply(lambda x: 1 if x == val else 0)
-            for group in [zips, states, loc]:
-                to_merge = df_all_data.groupby(group)[new_col].sum()
-                df_all_data = pd.merge(df_all_data, to_merge, on=zips,how=left)
+            #for group in [zips, states, loc]:
+            for group in [loc]:
+                to_merge = df_all_data.groupby(group)[new_col].sum()\
+                    .reset_index()\
+                    .rename(columns={new_col:new_col+group})
+                df_all_data = pd.merge(df_all_data, to_merge,\
+                    on=group,how='left')
         
     return df_all_data
 
