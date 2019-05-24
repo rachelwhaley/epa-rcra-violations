@@ -160,7 +160,7 @@ def num_facilities(df_all_data):
     loc = 'ACTIVITY_LOCATION'
 
     for group in [zips, states, loc]:
-        sums = db.groupby(group).size().reset_index()
+        sums = df_all_data.groupby(group).size().reset_index()
         df_all_data = pd.merge(df_all_data, sums, on=group, how='left')
 
     return df_all_data  
