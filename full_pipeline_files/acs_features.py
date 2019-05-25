@@ -1,5 +1,13 @@
+from datetime import datetime
+import pandas as pd
+import matplotlib.pyplot as plt
+import geopandas as gpd
+from shapely.geometry import Point
+import acs_features
+from census_area import Census
+import explore as exp
 pd.options.mode.chained_assignment = None
-
+import numpy as np
 
 
 def smaller_data_time(data, temp_feat, year):
@@ -12,7 +20,7 @@ def smaller_data_time(data, temp_feat, year):
     Output:
         Returns smaller dataframe
     '''
-    data['temp'] = pd.to_datetime(evalu[temp_feat], errors = 'coerce')
+    data['temp'] = pd.to_datetime(data[temp_feat], errors = 'coerce')
     data_temp = data[data['temp'].dt.year >= year]
     return data_temp
 
@@ -32,7 +40,6 @@ def keep_miss_nonmiss(data, lst_feat):
     return miss_df, non_miss_df
 
 
-years = [2011, 2012, 2013, 2014, 2015, 2016]
 def get_acs_data(years, tuple_val):
     '''
     Gets ACS data 
