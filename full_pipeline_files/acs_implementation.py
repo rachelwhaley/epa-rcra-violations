@@ -5,6 +5,9 @@ import geopandas as gpd
 from shapely.geometry import Point
 import acs_features as af
 from census_area import Census
+import explore as exp
+import numpy as np
+
 
 #%whos DataFrame
 
@@ -18,11 +21,17 @@ from census_area import Census
 
 #'/Users/csolisu/Downloads/zip_to_zcta_2017.xlsx'
 #'/Users/csolisu/Downloads/tl_2017_us_zcta510/tl_2017_us_zcta510.shp'
+
 def go(csv_path_facilities,csv_path_evalu, zip_to_zta_csv,shp_file):
     fac = exp.read_data(csv_path_facilities)
     evalu = exp.read_data(csv_path_evalu)
     years = [2011, 2012, 2013, 2014, 2015, 2016]
+    evalu_11 = af.smaller_data_time(evalu, 'EVALUATION_START_DATE', 2011) 
+    evalu_11['year'] = evalu_11['temp'].dt.year
+    evalu_11['year2'] = evalu_11['year']
 
+    evalu_11.loc[evalu_11['year'] == 2018, 'year2'] = 2016
+    evalu_11.loc[evalu_11['year'] == 2017, 'year2'] = 2016
     
     race_cat = {'B02001_002E': 'white alone', 
                 'B02001_003E': 'black alone',
@@ -134,12 +143,7 @@ def go(csv_path_facilities,csv_path_evalu, zip_to_zta_csv,shp_file):
     fac['ZIP_CODE'] = fac['ZIP_CODE'].str.split('-').str[0]
 
     #pref = {'Race':'B02001_00', 'Income':'B19001_00', 'Family Size':'B11016_00','Income Poverty':'B17026_00'}
-    evalu_11 = af.smaller_data_time(evalu, 'EVALUATION_START_DATE', 2011) 
-    evalu_11['year'] = evalu_11['temp'].dt.year
-    evalu_11['year2'] = evalu_11['year']
 
-    evalu_11.loc[evalu_11['year'] == 2018, 'year2'] = 2016
-    evalu_11.loc[evalu_11['year'] == 2017, 'year2'] = 2016
 
     df = pd.merge(evalu_11, fac, how='left', on='ID_NUMBER')
 
