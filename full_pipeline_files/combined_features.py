@@ -476,6 +476,7 @@ def main():
     snc_df = read_data(sys.argv[4])
 
     full_features_df = create_all_features(facilities_df, evals_df, violations_df, snc_df)
+    full_features_df.to_csv('full_features.csv')
 
     print(full_features_df.info())
     print(full_features_df.sort_values("SNC_Count", ascending=False).head(20))
