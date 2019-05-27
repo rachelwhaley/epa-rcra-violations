@@ -39,7 +39,7 @@ class ClassifierAnalyzer:
     def __repr__(self):
         return str(self.id)
 
-    def plot_precision_recall(self, save, name):
+    def plot_precision_recall(self, save, show, name):
         precision_curve, recall_curve, pr_thresholds = precision_recall_curve(
         self.truth, self.scores)
         precision_curve = precision_curve[:-1]
@@ -66,9 +66,10 @@ class ClassifierAnalyzer:
         plt.title(name)
         if save == True:
             plt.savefig(name)
-        plt.show()
+        if show == True:
+            plt.show()
 
-    def plot_roc(self, save, name):
+    def plot_roc(self, save, show, name):
         fpr, tpr, thresholds = roc_curve(self.truth, self.scores)
         roc_auc = auc(fpr, tpr)
         plt.clf()
@@ -82,7 +83,8 @@ class ClassifierAnalyzer:
         plt.legend(loc="lower right")
         if save == True:
             plt.savefig(name)
-        plt.show()
+        if show == True:
+            plt.show()
 
 def classify(x_train, y_train, x_test, classifier):
     '''
