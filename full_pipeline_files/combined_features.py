@@ -5,6 +5,107 @@ from datetime import datetime
 from pipeline_library import *
 
 
+def create_final(facilities_df):
+    """Facility frame with just ID, State, ZIP"""
+    ids = 'ID_NUMBER'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    #al = 'ACTIVITY_LOCATION'
+    gb = facilities_df.groupby([ids, zips, states])\
+        .size().reset_index()
+    d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
+    #gb = facilities_df.groupby([ids, al])\
+        #.size().reset_index()
+    #d = {ids: gb[ids], al: gb[al]}
+    facilities_with_features_df = pd.DataFrame(data=d)
+    return facilities_with_features_df
+
+
+def time_late(violations_df, facilities_df, max_date):
+    '''
+    !!!DONE!!!
+
+    Calculates:
+        Number of times early/late
+        Average time early/late
+        Total time early/late
+        Number of days since early/late
+
+        for a sinlg location
+        for all locations in a zip/state
+
+        within date ranges (date2 before date1)
+        before date1
+
+    Filter by zip codes
+
+    Filter by all facility ids
+    '''
+    # You can change these if need be
+    # I am assuming all of these will be in the df passed here
+    ids = 'ID_NUMBER'
+    actual = 'ACTUAL_RTC_DATE'
+    scheduled = 'SCHEDULED_COMPLIANCE_DATE'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    diff = 'difference'
+    early = 'early '
+    late = 'late '
+    # al = 'ACTIVITY_LOCATION'
+
+    facilities_with_features_df = create_final(facilities_df)
+
+    facilities_df[diff] = facilities_df[actual] - facilities_df[scheduled]
+    facilities_df[diff] = facilities_df[diff] \
+        .apply(lambda x: x.days)
+    facilities_df[early] = facilities_df[diff] \
+        .apply(lambda x: 0 if x >= 0 else 1)
+    facilities_df[late] = facilities_df[diff] \
+        .apply(lambda x: 0 if x <= 0 else 1)
+
+    gb = facilities_df.groupby([ids, zips, states]).ffill() \
+        .size().reset_index()
+    d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
+    # gb = facilities_df.groupby([ids, al])\
+    # .size().reset_index()
+    # d = {ids: gb[ids], al: gb[al]}
+    factlities_with_features_df = pd.DataFrame(data=d)
+
+    for col in [early, late]:
+        filt = (facilities_df[col] == 1)
+        our_db = facilities_df[filt]
+        # for group in [ids, al]:
+        for group in [ids, zips, states]:
+            label = col + " " + group
+            avg = our_db.groupby(group) \
+                [diff].mean().reset_index().rename( \
+                columns={diff: label + " avg"})
+            sums = our_db.groupby(group) \
+                [diff].sum().reset_index().rename( \
+                columns={diff: label + " sum"})
+            count = our_db.groupby(group) \
+                [col].sum().reset_index().rename( \
+                columns={col: label + " count"})
+            last = our_db.groupby(group) \
+                [actual].max() \
+                .apply(lambda x: (max_date - x).days) \
+                .reset_index().rename( \
+                columns={actual: "last " + label})
+            for gb_bool in [(avg, False), (sums, False), (count, False), \
+                            (last, True)]:
+                gb, bool_val = gb_bool
+                facilities_with_features_df = pd.merge(facilities_with_features_df, gb, \
+                                                       on=group, how='left')
+                if bool_val:
+                    to_fill = "last " + label
+                    factlities_with_features_df[to_fill] = facilities_with_features_df[to_fill] \
+                        .fillna(value=float('Inf'))
+
+    return facilities_with_features_df
+
+
+# OLD VERSION OF TIME_LATE
+'''
 def time_late(date1, date2, violations_df):
     """
     !!!DONE!!!
@@ -77,9 +178,10 @@ def time_late(date1, date2, violations_df):
                     violations_df_time_features = pd.merge(violations_df, gb, on=group, how='left')
 
     return violations_df_time_features
+    '''
 
 
-def num_inspections(date1, date2, evals_df):
+def num_inspections(evals_df, facilities_df):
     """
     !!!DONE!!!
     Calculates:
@@ -95,11 +197,29 @@ def num_inspections(date1, date2, evals_df):
     date1: we want evaluations before this
     date2: if we want to filter dates between two dates
     """
+
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    ids = 'ID_NUMBER'
+
+    evals_w_geo = pd.merge(evals_df, facilities_df[[ids, states, zips]], on="ID_NUMBER", how="left")
+    print(evals_w_geo.head())
+
+    sums_state = evals_w_geo.groupby(states).size()  # .reset_index() # .rename(columns={0: "NumEvalsInMyState"})
+    facilities_w_num_nearby = pd.merge(facilities_df, sums_state, on=states, how='left')
+
+    sums_zip = facilities_w_num_nearby.groupby(zips).size().reset_index().rename(columns={0: "NumEvalsInMyZIP"})
+    facilities_w_num_nearby = pd.merge(facilities_w_num_nearby, sums_zip, on=zips, how='left')
+
+    return facilities_w_num_nearby
+
+'''
+    # original code
     date = 'EVALUATION_START_DATE'
     ids = 'ID_NUMBER'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
-
+    
     filt_between = \
         (evals_df[date] <= date1) & \
         (evals_df[date] >= date2)
@@ -108,9 +228,9 @@ def num_inspections(date1, date2, evals_df):
     df_between = evals_df[filt_between]
     df_before = evals_df[filt_before]
 
-    # for group in [ids, zips, states]:
-    for group in [ids, 'ACTIVITY_LOCATION']:
-        for db in [df_between, df_before]:
+    for group in [ids, zips, states]:
+    # for group in [ids, 'ACTIVITY_LOCATION']:
+        for db in evals_df:
             sums = db.groupby(group) \
                 .size().reset_index()
             last = db.groupby(group) \
@@ -120,8 +240,10 @@ def num_inspections(date1, date2, evals_df):
             for gb in [sums, last]:
                 evals_grouped_num_inspections = pd.merge(evals_df, gb, on=group, how='left')
 
-    return evals_grouped_num_inspections
+    print(evals_grouped_num_inspections.head())
 
+    return evals_grouped_num_inspections # .groupby("ID_NUMBER").size().reset_index() # .rename(columns={0: "NumInMyState"})
+    '''
 
 # TODO: check in on this function
 def corrective_event(date1, date2, df_all_data):
@@ -201,11 +323,15 @@ def num_facilities(facilities_df):
     Calculates:
         Number of facilities in a zip code and state
     """
-    # zips = 'ZIP_CODE'
+    zips = 'ZIP_CODE'
     states = 'STATE_CODE'
-    for group in facilities_df[states]: # [zips, states]:
-        sums = facilities_df.groupby(group).size() # .reset_index()
-        facilities_w_num_nearby = pd.merge(facilities_df, sums, on=group, how='left')
+
+    sums_state = facilities_df.groupby(states).size().reset_index().rename(columns={0: "NumInMyState"})
+    facilities_w_num_nearby = pd.merge(facilities_df, sums_state, on=states, how='left')
+
+    sums_zip = facilities_w_num_nearby.groupby(zips).size().reset_index().rename(columns={0: "NumInMyZIP"})
+    facilities_w_num_nearby = pd.merge(facilities_w_num_nearby, sums_zip, on=zips, how='left')
+
     return facilities_w_num_nearby
 
 
@@ -258,9 +384,7 @@ def flag_lqg(facilities_df):
                                        facilities_df.index)
     facilities_df["IsTSDF"] = pd.Series(np.where(facilities_df.HREPORT_UNIVERSE_RECORD.str.contains("TSDF"), 1, 0), \
                                        facilities_df.index)
-    # dummies = pd.get_dummies(facilities_df["FED_WASTE_GENERATOR"])
-    # print(dummies.info())
-    # facilities_df = pd.merge(facilities_df, dummies, how='left')
+
     return facilities_df
 
 
@@ -325,7 +449,15 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
     facilities_lqg = flag_lqg(facilities_w_violations)
     facilities_snc = snc_info(facilities_lqg, snc_df)
     facilities_outcomes = create_outcome_vars(facilities_snc)
-    return facilities_outcomes
+    # print(facilities_outcomes.info())
+    facilities_nearby_nums = num_facilities(facilities_outcomes)
+
+    max_date = datetime(2000, 1, 1, 0, 0)
+
+    facilities_w_time_late = time_late(facilities_nearby_nums, max_date)
+    # facilities_w_num_ins_nearby = num_inspections(evals_df, facilities_nearby_nums)
+    # facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_num_ins_nearby, on="ID_NUMBER", how="left")
+    return facilities_w_time_late
 
 
 def main():
@@ -337,7 +469,7 @@ def main():
     start_date = "01-01-2012"
     end_date = "01-01-2019"
 
-    # read in, process, and explore data
+    # read in data
     facilities_df = read_data(sys.argv[1])
     evals_df = read_data(sys.argv[2])
     violations_df = read_data(sys.argv[3])
@@ -346,8 +478,6 @@ def main():
     full_features_df = create_all_features(facilities_df, evals_df, violations_df, snc_df)
 
     print(full_features_df.info())
-    # print(full_features_df["IsLQG"].sum())
-    # print(full_features_df["ID_NUMBER"].count())
     print(full_features_df.sort_values("SNC_Count", ascending=False).head(20))
 
 
