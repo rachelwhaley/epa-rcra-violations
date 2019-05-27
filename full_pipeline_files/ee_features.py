@@ -4,24 +4,24 @@ The Features Esther Edith is creating
 
 import pandas as pd
 
-def create_final(facilities_df):
+def create_final(more_info_df,facilities_df):
     ids = 'ID_NUMBER'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
     al = 'ACTIVITY_LOCATION'
-    gb = facilities_df.groupby([ids, zips, states])\
+    more_info_df = pd.merge(more_info_df,\
+        facilities_df[[ids, zips, states]], on=ids,\
+        how='left')
+    gb = more_info_df.groupby([ids, zips, states])\
         .size().reset_index()
-    d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
-    #gb = facilities_df.groupby([ids, al])\
-        #.size().reset_index()
-    #d = {ids: gb[ids], al: gb[al]}
-    factlities_with_features_df = pd.DataFrame(data=d)
+    data = {ids: gb[ids], zips: gb[zips], states: gb[states]}
+    factlities_with_features_df = pd.DataFrame(data=data)
     return factlities_with_features_df
 
-def time_late(facilities_df, max_date):
+def time_late(violations_df, max_date, facilities_df):
     '''
     Inputs:
-        facilities_df: a dataframe with all violations information
+        violations_df: a dataframe with all violations information
         max_date: the maximum date in our training/testing set
     !!!DONE!!!
 
@@ -53,28 +53,19 @@ def time_late(facilities_df, max_date):
     late = 'late '
     #al = 'ACTIVITY_LOCATION'
 
-    factlities_with_features_df = create_final(facilities_df)
+    factlities_with_features_df = create_final(violations_df, facilities_df)
 
-    facilities_df[diff] = facilities_df[actual] - facilities_df[scheduled]
-    facilities_df[diff] = facilities_df[diff]\
+    violations_df[diff] = violations_df[actual] - violations_df[scheduled]
+    violations_df[diff] = violations_df[diff]\
         .apply(lambda x: x.days)
-    facilities_df[early] = facilities_df[diff]\
+    violations_df[early] = violations_df[diff]\
         .apply(lambda x: 0 if x >= 0 else 1)
-    facilities_df[late] = facilities_df[diff]\
+    violations_df[late] = violations_df[diff]\
         .apply(lambda x: 0 if x <= 0 else 1)
 
-    
-    gb = facilities_df.groupby([ids, zips, states]).ffill()\
-        .size().reset_index()
-    d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
-    #gb = facilities_df.groupby([ids, al])\
-        #.size().reset_index()
-    #d = {ids: gb[ids], al: gb[al]}
-    factlities_with_features_df = pd.DataFrame(data=d)
-
     for col in [early, late]:
-        filt = (facilities_df[col] == 1)
-        our_db = facilities_df[filt]
+        filt = (violations_df[col] == 1)
+        our_db = violations_df[filt]
         #for group in [ids, al]:
         for group in [ids, zips, states]:
             label = col + " " + group
@@ -104,7 +95,7 @@ def time_late(facilities_df, max_date):
 
     return factlities_with_features_df
 
-def num_inspections(facilities_df, max_date):
+def num_inspections(evals_df, max_date, facilities_df):
     '''
     Inputs:
         facilities_df: a dataframe with all evaluations information
@@ -130,13 +121,13 @@ def num_inspections(facilities_df, max_date):
     states = 'STATE_CODE'
     al = 'ACTIVITY_LOCATION'
 
-    factlities_with_features_df = create_final(facilities_df)
+    factlities_with_features_df = create_final(evals_df, facilities_df)
     
     #for group in [ids, al]:
     for group in [ids, zips, states]:
-        sums = facilities_df.groupby(group)\
+        sums = evals_df.groupby(group)\
             .size().reset_index()
-        last = facilities_df.groupby(group)\
+        last = evals_df.groupby(group)\
             [date].max()\
             .apply(lambda x: (max_date - x).days)\
             .reset_index().rename(columns={date:group+" last"})
