@@ -87,6 +87,7 @@ def num_inspections(date1, date2, df_all_data):
     !!!DONE!!!
     Calculates:
         Number of inspections
+        Days since last inspection
         
         for all locations in a zip/state
 
@@ -125,12 +126,35 @@ def num_inspections(date1, date2, df_all_data):
 
     return df_all_data
 
-def corrective_event():
+def corrective_event(date1, date2, df_all_data):
     '''
     Generates features based on a corrective action event
-    
-    I NEED TO RE-DOWNLOAD THIS DATA
     '''
+    date = 'Actual Date of Event'
+    event = 'Corrective Action Event Code'
+
+    filt_between =\
+        (df_all_data[date] <= date1) &\
+        (df_all_data[date] >= date2)
+    filt_before = (df_all_data[date] <= date1)
+    
+    df_between = df_all_data[filt_between]
+    df_before = df_all_data[filt_before]
+
+    val_unique = df_all_data[event].unique()
+    for val in val_unique:
+        for df in [df_between, df_before]:
+            new_col = str(val)
+            df_all_data[new_col] = df_all_data[events]\
+                .apply(lambda x: 1 if x == val else 0)
+            for group in [zips, states]:
+                to_merge = df_all_data.groupby(group)[new_col].sum()\
+                    .reset_index()\
+                    .rename(columns={new_col:new_col+group})
+                df_all_data = pd.merge(df_all_data, to_merge,\
+                    on=group,how='left')
+
+
     csv_name = 'Corrective_Action_Event.csv'
     df_ca = pd.read_csv(csv_name, usecols=[0,5])
     return df_ca
