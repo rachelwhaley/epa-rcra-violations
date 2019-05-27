@@ -4,7 +4,21 @@ The Features Esther Edith is creating
 
 import pandas as pd
 
-def time_late(date1, date2, df_all_data):
+def create_final(df_all_data):
+    ids = 'ID_NUMBER'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    #al = 'ACTIVITY_LOCATION'
+    gb = df_all_data.groupby([ids, zips, states])\
+        .size().reset_index()
+    d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
+    #gb = df_all_data.groupby([ids, al])\
+        #.size().reset_index()
+    #d = {ids: gb[ids], al: gb[al]}
+    final_df = pd.DataFrame(data=d)
+    return final_df
+
+def time_late(df_all_data, max_date):
     '''
     !!!DONE!!!
 
@@ -27,16 +41,16 @@ def time_late(date1, date2, df_all_data):
     #You can change these if need be
     #I am assuming all of these will be in the df passed here
     ids = 'ID_NUMBER'
-    date_to_split = 'ACTUAL_RTC_DATE'
-    actual = date_to_split
+    actual = 'ACTUAL_RTC_DATE'
     scheduled = 'SCHEDULED_COMPLIANCE_DATE'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
     diff = 'difference'
     early = 'early '
     late = 'late '
-    between = ' between: ' + str(date2) + " - " + str(date1)
-    before = ' before: '+ str(date1)
+    #al = 'ACTIVITY_LOCATION'
+
+    final_df = create_final(df_all_data)
 
     df_all_data[diff] = df_all_data[actual] - df_all_data[scheduled]
     df_all_data[diff] = df_all_data[diff]\
@@ -46,41 +60,46 @@ def time_late(date1, date2, df_all_data):
     df_all_data[late] = df_all_data[diff]\
         .apply(lambda x: 0 if x <= 0 else 1)
 
-    filt_between =\
-        (df_all_data[date_to_split] <= date1) &\
-        (df_all_data[date_to_split] >= date2)
-    filt_before = (df_all_data[date_to_split] <= date1)
     
-    df_between = df_all_data[filt_between]
-    df_before = df_all_data[filt_before]
+    gb = df_all_data.groupby([ids, zips, states]).ffill()\
+        .size().reset_index()
+    d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
+    #gb = df_all_data.groupby([ids, al])\
+        #.size().reset_index()
+    #d = {ids: gb[ids], al: gb[al]}
+    final_df = pd.DataFrame(data=d)
 
     for col in [early, late]:
-        for db_label in [(df_between, between), (df_before, before)]:
-            db, label = db_label
-            label = col + " " + label
-            filt = (db[col] == 1)
-            our_db = db[filt]
-            for group in [ids, zips, states]:
-                label += " " + group
-                avg = our_db.groupby(group)\
-                    [diff].mean().reset_index().rename(\
-                    columns={diff:label+" avg"})
-                sums = our_db.groupby(group)\
-                    [diff].sum().reset_index().rename(\
-                    columns={diff:label+" sum"})
-                count = our_db.groupby(group)\
-                    [col].sum().reset_index().rename(\
-                    columns={col:label+" count"})
-                last = our_db.groupby(group)\
-                    [actual].max()\
-                    .apply(lambda x: (date1 - x).days)\
-                    .reset_index().rename(\
-                    columns={actual:"last " + label})
-                for gb in [avg, sums, count, last]:
-                    df_all_data = pd.merge(df_all_data, gb,\
-                        on=group, how='left')
+        filt = (df_all_data[col] == 1)
+        our_db = df_all_data[filt]
+        #for group in [ids, al]:
+        for group in [ids, zips, states]:
+            label = col + " " + group
+            avg = our_db.groupby(group)\
+                [diff].mean().reset_index().rename(\
+                columns={diff:label+" avg"})
+            sums = our_db.groupby(group)\
+                [diff].sum().reset_index().rename(\
+                columns={diff:label+" sum"})
+            count = our_db.groupby(group)\
+                [col].sum().reset_index().rename(\
+                columns={col:label+" count"})
+            last = our_db.groupby(group)\
+                [actual].max()\
+                .apply(lambda x: (max_date - x).days)\
+                .reset_index().rename(\
+                columns={actual:"last " + label})
+            for gb_bool in [(avg, False), (sums, False), (count, False),\
+                (last, True)]:
+                gb, bool_val = gb_bool
+                final_df = pd.merge(final_df, gb,\
+                    on=group, how='left')
+                if bool_val:
+                    to_fill = "last " + label
+                    final_df[to_fill] = final_df[to_fill]\
+                        .fillna(value=float('Inf'))
 
-    return df_all_data
+    return final_df
 
 def num_inspections(date1, date2, df_all_data):
     '''
@@ -103,28 +122,25 @@ def num_inspections(date1, date2, df_all_data):
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
 
-    filt_between =\
-        (df_all_data[date] <= date1) &\
-        (df_all_data[date] >= date2)
-    filt_before = (df_all_data[date] <= date1)
-    
-    df_between = df_all_data[filt_between]
-    df_before = df_all_data[filt_before]
+    final_df = create_final(df_all_data)
 
-    #for group in [ids, zips, states]:
-    for group in [ids, 'ACTIVITY_LOCATION']:
-        for db in [df_between, df_before]:
-            sums = db.groupby(group)\
-                .size().reset_index()
-            last = db.groupby(group)\
-                [date].max()\
-                .apply(lambda x: (date1 - x).days)\
-                .reset_index()
-            for gb in [sums, last]:
-                df_all_data = pd.merge(df_all_data, gb,\
-                    on=group, how='left')
+    for group in [ids, zips, states]:
+        sums = db.groupby(group)\
+            .size().reset_index()
+        last = db.groupby(group)\
+            [date].max()\
+            .apply(lambda x: (date1 - x).days)\
+            .reset_index().rename{columns={date:group+" last"}}
+        for gb_bool in [(sums, False), (last, True)]:
+        	gb, bool_val = gb_bool
+            final_df = pd.merge(final_df, gb,\
+                on=group, how='left')
+            if bool_val:
+            	to_fill = group+" last"
+                final_df[to_fill] = final_df[to_fill]\
+                    .fillna(value=float('Inf'))
 
-    return df_all_data
+    return final_df
 
 def corrective_event(date1, date2, df_all_data):
     '''
