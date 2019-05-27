@@ -4,21 +4,21 @@ The Features Esther Edith is creating
 
 import pandas as pd
 
-def create_final(df_all_data):
+def create_final(facilities_df):
     ids = 'ID_NUMBER'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
     #al = 'ACTIVITY_LOCATION'
-    gb = df_all_data.groupby([ids, zips, states])\
+    gb = facilities_df.groupby([ids, zips, states])\
         .size().reset_index()
     d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
-    #gb = df_all_data.groupby([ids, al])\
+    #gb = facilities_df.groupby([ids, al])\
         #.size().reset_index()
     #d = {ids: gb[ids], al: gb[al]}
-    final_df = pd.DataFrame(data=d)
-    return final_df
+    factlities_with_features_df = pd.DataFrame(data=d)
+    return factlities_with_features_df
 
-def time_late(df_all_data, max_date):
+def time_late(facilities_df, max_date):
     '''
     !!!DONE!!!
 
@@ -50,28 +50,28 @@ def time_late(df_all_data, max_date):
     late = 'late '
     #al = 'ACTIVITY_LOCATION'
 
-    final_df = create_final(df_all_data)
+    factlities_with_features_df = create_final(facilities_df)
 
-    df_all_data[diff] = df_all_data[actual] - df_all_data[scheduled]
-    df_all_data[diff] = df_all_data[diff]\
+    facilities_df[diff] = facilities_df[actual] - facilities_df[scheduled]
+    facilities_df[diff] = facilities_df[diff]\
         .apply(lambda x: x.days)
-    df_all_data[early] = df_all_data[diff]\
+    facilities_df[early] = facilities_df[diff]\
         .apply(lambda x: 0 if x >= 0 else 1)
-    df_all_data[late] = df_all_data[diff]\
+    facilities_df[late] = facilities_df[diff]\
         .apply(lambda x: 0 if x <= 0 else 1)
 
     
-    gb = df_all_data.groupby([ids, zips, states]).ffill()\
+    gb = facilities_df.groupby([ids, zips, states]).ffill()\
         .size().reset_index()
     d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
-    #gb = df_all_data.groupby([ids, al])\
+    #gb = facilities_df.groupby([ids, al])\
         #.size().reset_index()
     #d = {ids: gb[ids], al: gb[al]}
-    final_df = pd.DataFrame(data=d)
+    factlities_with_features_df = pd.DataFrame(data=d)
 
     for col in [early, late]:
-        filt = (df_all_data[col] == 1)
-        our_db = df_all_data[filt]
+        filt = (facilities_df[col] == 1)
+        our_db = facilities_df[filt]
         #for group in [ids, al]:
         for group in [ids, zips, states]:
             label = col + " " + group
@@ -92,16 +92,16 @@ def time_late(df_all_data, max_date):
             for gb_bool in [(avg, False), (sums, False), (count, False),\
                 (last, True)]:
                 gb, bool_val = gb_bool
-                final_df = pd.merge(final_df, gb,\
+                factlities_with_features_df = pd.merge(factlities_with_features_df, gb,\
                     on=group, how='left')
                 if bool_val:
                     to_fill = "last " + label
-                    final_df[to_fill] = final_df[to_fill]\
+                    factlities_with_features_df[to_fill] = factlities_with_features_df[to_fill]\
                         .fillna(value=float('Inf'))
 
-    return final_df
+    return factlities_with_features_df
 
-def num_inspections(date1, date2, df_all_data):
+def num_inspections(date1, date2, facilities_df):
     '''
     !!!DONE!!!
     Calculates:
@@ -122,7 +122,7 @@ def num_inspections(date1, date2, df_all_data):
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
 
-    final_df = create_final(df_all_data)
+    factlities_with_features_df = create_final(facilities_df)
 
     for group in [ids, zips, states]:
         sums = db.groupby(group)\
@@ -133,49 +133,51 @@ def num_inspections(date1, date2, df_all_data):
             .reset_index().rename{columns={date:group+" last"}}
         for gb_bool in [(sums, False), (last, True)]:
         	gb, bool_val = gb_bool
-            final_df = pd.merge(final_df, gb,\
+            factlities_with_features_df = pd.merge(factlities_with_features_df, gb,\
                 on=group, how='left')
             if bool_val:
             	to_fill = group+" last"
-                final_df[to_fill] = final_df[to_fill]\
+                factlities_with_features_df[to_fill] = factlities_with_features_df[to_fill]\
                     .fillna(value=float('Inf'))
 
-    return final_df
+    return factlities_with_features_df
 
-def corrective_event(date1, date2, df_all_data):
+def corrective_event(date1, date2, facilities_df):
     '''
     Generates features based on a corrective action event
+    '''
     '''
     date = 'Actual Date of Event'
     event = 'Corrective Action Event Code'
 
     filt_between =\
-        (df_all_data[date] <= date1) &\
-        (df_all_data[date] >= date2)
-    filt_before = (df_all_data[date] <= date1)
+        (facilities_df[date] <= date1) &\
+        (facilities_df[date] >= date2)
+    filt_before = (facilities_df[date] <= date1)
     
-    df_between = df_all_data[filt_between]
-    df_before = df_all_data[filt_before]
+    df_between = facilities_df[filt_between]
+    df_before = facilities_df[filt_before]
 
-    val_unique = df_all_data[event].unique()
+    val_unique = facilities_df[event].unique()
     for val in val_unique:
         for df in [df_between, df_before]:
             new_col = str(val)
-            df_all_data[new_col] = df_all_data[events]\
+            facilities_df[new_col] = facilities_df[events]\
                 .apply(lambda x: 1 if x == val else 0)
             for group in [zips, states]:
-                to_merge = df_all_data.groupby(group)[new_col].sum()\
+                to_merge = facilities_df.groupby(group)[new_col].sum()\
                     .reset_index()\
                     .rename(columns={new_col:new_col+group})
-                df_all_data = pd.merge(df_all_data, to_merge,\
+                facilities_df = pd.merge(facilities_df, to_merge,\
                     on=group,how='left')
 
 
     csv_name = 'Corrective_Action_Event.csv'
     df_ca = pd.read_csv(csv_name, usecols=[0,5])
     return df_ca
+    '''
 
-def type_waste(df_all_data):
+def type_waste(facilities_df):
     '''
     !!!DONE!!!
 
@@ -197,22 +199,22 @@ def type_waste(df_all_data):
     states = 'STATE_CODE'
 
     for col in [waste_codes, code_owner, naics]:
-        ser = df_all_data[col]
+        ser = facilities_df[col]
         val_unique = ser.unique()
         for val in val_unique:
             new_col = col + str(val)
-            df_all_data[new_col] = df_all_data[waste_codes]\
+            facilities_df[new_col] = facilities_df[waste_codes]\
                 .apply(lambda x: 1 if x == val else 0)
             for group in [zips, states]:
-                to_merge = df_all_data.groupby(group)[new_col].sum()\
+                to_merge = facilities_df.groupby(group)[new_col].sum()\
                     .reset_index()\
                     .rename(columns={new_col:new_col+group})
-                df_all_data = pd.merge(df_all_data, to_merge,\
+                facilities_df = pd.merge(facilities_df, to_merge,\
                     on=group,how='left')
         
-    return df_all_data
+    return facilities_df
 
-def num_facilities(df_all_data):
+def num_facilities(facilities_df):
     '''
     !!!DONE!!!
 
@@ -222,6 +224,6 @@ def num_facilities(df_all_data):
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
     for group in [zips, states]:
-        sums = df_all_data.groupby(group).size().reset_index()
-        df_all_data = pd.merge(df_all_data, sums, on=group, how='left')
-    return df_all_data
+        sums = facilities_df.groupby(group).size().reset_index()
+        facilities_df = pd.merge(facilities_df, sums, on=group, how='left')
+    return facilities_df
