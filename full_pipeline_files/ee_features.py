@@ -8,7 +8,7 @@ def create_final(facilities_df):
     ids = 'ID_NUMBER'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
-    #al = 'ACTIVITY_LOCATION'
+    al = 'ACTIVITY_LOCATION'
     gb = facilities_df.groupby([ids, zips, states])\
         .size().reset_index()
     d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
@@ -20,6 +20,9 @@ def create_final(facilities_df):
 
 def time_late(facilities_df, max_date):
     '''
+    Inputs:
+        facilities_df: a dataframe with all violations information
+        max_date: the maximum date in our training/testing set
     !!!DONE!!!
 
     Calculates:
@@ -101,8 +104,12 @@ def time_late(facilities_df, max_date):
 
     return factlities_with_features_df
 
-def num_inspections(date1, date2, facilities_df):
+def num_inspections(facilities_df, max_date):
     '''
+    Inputs:
+        facilities_df: a dataframe with all evaluations information
+        max_date: the maximum date in our training/testing set
+
     !!!DONE!!!
     Calculates:
         Number of inspections
@@ -121,26 +128,30 @@ def num_inspections(date1, date2, facilities_df):
     ids = 'ID_NUMBER'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
+    al = 'ACTIVITY_LOCATION'
 
     factlities_with_features_df = create_final(facilities_df)
-
+    
+    #for group in [ids, al]:
     for group in [ids, zips, states]:
-        sums = db.groupby(group)\
+        sums = facilities_df.groupby(group)\
             .size().reset_index()
-        last = db.groupby(group)\
+        last = facilities_df.groupby(group)\
             [date].max()\
-            .apply(lambda x: (date1 - x).days)\
-            .reset_index().rename{columns={date:group+" last"}}
+            .apply(lambda x: (max_date - x).days)\
+            .reset_index().rename(columns={date:group+" last"})
         for gb_bool in [(sums, False), (last, True)]:
-        	gb, bool_val = gb_bool
-            factlities_with_features_df = pd.merge(factlities_with_features_df, gb,\
+            gb, bool_val = gb_bool
+            factlities_with_features_df = pd.merge(\
+            	factlities_with_features_df, gb,\
                 on=group, how='left')
             if bool_val:
-            	to_fill = group+" last"
+                to_fill = group+" last"
                 factlities_with_features_df[to_fill] = factlities_with_features_df[to_fill]\
                     .fillna(value=float('Inf'))
 
-    return factlities_with_features_df
+    return factlities_with_features_df.rename(\
+        columns={'0_x':"eval_sum_zips", '0_y':"eval_sum_states"})
 
 def corrective_event(date1, date2, facilities_df):
     '''
@@ -226,4 +237,5 @@ def num_facilities(facilities_df):
     for group in [zips, states]:
         sums = facilities_df.groupby(group).size().reset_index()
         facilities_df = pd.merge(facilities_df, sums, on=group, how='left')
-    return facilities_df
+    return facilities_df.rename(\
+        columns={'0_x':"facilities_in_zip", '0_y':"facilities_in_state"})
