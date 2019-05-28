@@ -9,7 +9,7 @@ import ml_loop as ml
 import clean_evals as ce
 
 '''
-read in constituent datasets 
+read in and begin cleaning constituent datasets 
 '''
 
 FACILITIES = pd.read_csv('RCRA_FACILITIES.csv')
@@ -23,10 +23,11 @@ SNC = pd.read_csv('RCRA_VIOSNC_HISTORY.csv')
 ce.clean_snc(SNC)
 date_cols = ['EVALUATION_START_DATE', 'DATE_VIOLATION_DETERMINED', 'YRMONTH']
 
-raw_data = [EVALS, VIOLATIONS, SNC]
-periodized = [ml.temp_holdout(EVALS, date_cols[0], 24, 24),
-              ml.temp_holdout(VIOLATIONS, date_cols[1], 24, 24),
-              ml.temp_holdout(SNC, date_cols[2], 24, 24)]
+#create temporal test and train features and true Y values
+
+#periodized = [ml.temp_holdout(EVALS, date_cols[0], 24, 24),
+              #ml.temp_holdout(VIOLATIONS, date_cols[1], 24, 24),
+              #ml.temp_holdout(SNC, date_cols[2], 24, 24)]
 
 features = []
 
@@ -35,4 +36,5 @@ for period, dfs in enumerate(periodized[0]):
         features.append(cf.create_all_features(FACILITIES, periodized[0][period],
                                               periodized[1][period],
                                                periodized[2][period]))
+
 
