@@ -25,16 +25,20 @@ date_cols = ['EVALUATION_START_DATE', 'DATE_VIOLATION_DETERMINED', 'YRMONTH']
 
 #create temporal test and train features and true Y values
 
-#periodized = [ml.temp_holdout(EVALS, date_cols[0], 24, 24),
-              #ml.temp_holdout(VIOLATIONS, date_cols[1], 24, 24),
-              #ml.temp_holdout(SNC, date_cols[2], 24, 24)]
+periodized = [ml.temp_holdout(EVALS, date_cols[0], 24, 24),
+              ml.temp_holdout(VIOLATIONS, date_cols[1], 24, 24),
+              ml.temp_holdout(SNC, date_cols[2], 24, 24)]
 
 features = []
 
+'''
 for period, dfs in enumerate(periodized[0]):
     if dfs.EVALUATION_START_DATE.min() >= pd.to_datetime('2012-01-01'):
         features.append(cf.create_all_features(FACILITIES, periodized[0][period],
                                               periodized[1][period],
                                                periodized[2][period]))
+'''
+
+                                            
 
 
