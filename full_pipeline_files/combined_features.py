@@ -21,7 +21,7 @@ def create_final(facilities_df):
     return facilities_with_features_df
 
 
-def time_late(facilities_df, max_date):
+def time_late(violations_df, facilities_df, max_date):
     '''
     !!!DONE!!!
 
@@ -55,15 +55,23 @@ def time_late(facilities_df, max_date):
 
     facilities_with_features_df = create_final(facilities_df)
 
-    facilities_df[diff] = facilities_df[actual] - facilities_df[scheduled]
+    violations_df[actual] = pd.to_datetime(violations_df[actual],
+                                           format='%m/%d/%Y', errors='coerce')
+    violations_df[scheduled] = pd.to_datetime(violations_df[scheduled],
+                                           format='%m/%d/%Y', errors='coerce')
+
+    facilities_df[diff] = violations_df[actual] - violations_df[scheduled]
+    facilities_df[actual] = violations_df[actual]
+    facilities_df[scheduled] = violations_df[scheduled]
     facilities_df[diff] = facilities_df[diff] \
         .apply(lambda x: x.days)
     facilities_df[early] = facilities_df[diff] \
         .apply(lambda x: 0 if x >= 0 else 1)
     facilities_df[late] = facilities_df[diff] \
         .apply(lambda x: 0 if x <= 0 else 1)
+    facilities_df[[ids, zips, states]].ffill()
 
-    gb = facilities_df.groupby([ids, zips, states]).ffill() \
+    gb = facilities_df.groupby([ids, zips, states]) \
         .size().reset_index()
     d = {ids: gb[ids], zips: gb[zips], states: gb[states]}
     # gb = facilities_df.groupby([ids, al])\
@@ -86,8 +94,10 @@ def time_late(facilities_df, max_date):
             count = our_db.groupby(group) \
                 [col].sum().reset_index().rename( \
                 columns={col: label + " count"})
+            #the trouble is in how this is being called (I changed max to
+            # nanmax) but max was also not working
             last = our_db.groupby(group) \
-                [actual].max() \
+                [actual].nanmax() \
                 .apply(lambda x: (max_date - x).days) \
                 .reset_index().rename( \
                 columns={actual: "last " + label})
@@ -367,8 +377,6 @@ def create_eval_features(facilities_df, evals_df):
     facilities_w_violations = pd.merge(facilities_w_violations, max_date, left_on='ID_NUMBER', right_on='ID_NUMBER',
                                        how='left')
 
-    facilities_w_violations["MostRecentEval"] = pd.to_datetime(facilities_w_violations["MostRecentEval"],
-                                                               format='%m/%d/%Y', errors='coerce')
 
     facilities_w_violations["NumMonthsSinceEval"] = (datetime.today() - facilities_w_violations["MostRecentEval"]) / (
         np.timedelta64(1, 'M'))
@@ -454,7 +462,7 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
 
     max_date = datetime(2000, 1, 1, 0, 0)
 
-    facilities_w_time_late = time_late(violationfacilities_nearby_nums, max_date)
+    facilities_w_time_late = time_late(violations_df, facilities_nearby_nums, max_date)
     # facilities_w_num_ins_nearby = num_inspections(evals_df, facilities_nearby_nums)
     # facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_num_ins_nearby, on="ID_NUMBER", how="left")
     return facilities_w_time_late
