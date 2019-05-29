@@ -139,19 +139,19 @@ def define_clfs_params(grid_size):
     clfs = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
         'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1, criterion='entropy'),
         'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200),
-        'LR': LogisticRegression(penalty='l1', C=1e5),
+        'LR': LogisticRegression(penalty='l2', C=1e5, solver='lbfgs'),
         'SVM': SVC(kernel='linear', probability=True, random_state=0),
         'GB': GradientBoostingClassifier(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10),
         'NB': GaussianNB(),
         'DT': DecisionTreeClassifier(),
-        'SGD': SGDClassifier(loss="hinge", penalty="l2"),
+        'SGD': SGDClassifier(loss="log", penalty="l2"),
         'KNN': KNeighborsClassifier(n_neighbors=3), 
         'BAG': BaggingClassifier(DecisionTreeClassifier(), max_samples= 0.5, n_estimators = 20) 
             }
 
     large_grid = { 
     'RF':{'n_estimators': [1,10,100,1000,10000], 'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'n_jobs': [-1]},
-    'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10]},
+    'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10], 'solver': ['liblinear']},
     'SGD': { 'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
     'ET': { 'n_estimators': [1,10,100,1000,10000], 'criterion' : ['gini', 'entropy'] ,'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'n_jobs': [-1]},
     'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000,10000]},
@@ -165,7 +165,7 @@ def define_clfs_params(grid_size):
     
     small_grid = { 
     'RF':{'n_estimators': [10,100], 'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
-    'LR': { 'penalty': ['l1','l2'], 'C': [0.001,0.1,1]},
+    'LR': { 'penalty': ['l1','l2'], 'C': [0.001,0.1,1], 'solver': ['saga', 'liblinear']},
     'SGD': { 'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
     'ET': { 'n_estimators': [10,100], 'criterion' : ['gini', 'entropy'] ,'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
     'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000,10000]},
@@ -179,7 +179,7 @@ def define_clfs_params(grid_size):
     
     test_grid = { 
     'RF':{'n_estimators': [1], 'max_depth': [1], 'max_features': ['sqrt'],'min_samples_split': [10]},
-    'LR': { 'penalty': ['l1'], 'C': [0.01]},
+    'LR': { 'penalty': ['l2'], 'C': [0.01]},
     'SGD': { 'loss': ['perceptron'], 'penalty': ['l2']},
     'ET': { 'n_estimators': [1], 'criterion' : ['gini'] ,'max_depth': [1], 'max_features': ['sqrt'],'min_samples_split': [10]},
     'AB': { 'algorithm': ['SAMME'], 'n_estimators': [1]},
@@ -220,19 +220,20 @@ def model_analyzer(clfs, grid, plots, x_train, y_train, x_test, y_test):
         for p in ParameterGrid(parameter_values):
             try:
                 name = klass + str(p)
+                print(name)
                 m = ma.ClassifierAnalyzer(model, p, name, .2, x_train, y_train,
                                           x_test, y_test)
                 stats_dics.append(vars(m))
-                predictions_dict[m] = m.predictions
+                predictions_dict[m.name] = m.predictions
                 if plots == 'show':
-                    m.plot_precision_recall(False, True, name + 'pr')
+                    m.plot_precision_recall(False, True, name + 'pr' + '.png')
                     m.plot_roc(False, True, name + 'roc')
                 if plots == 'save':
                     m.plot_precision_recall(True, False, name + 'pr' + '.png')
-                    m.plot_roc(True, False, name + 'pr' + '.png')
+                    m.plot_roc(True, False, name + 'pr')
 
             except IndexError as e:
                     print('Error:',e)
                     continue
 
-    return stats_dics, pd.DataFrame(predictions_dict)
+    return stats_dics, predictions_dict
