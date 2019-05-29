@@ -226,7 +226,7 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                                               x_test, y_test)
                     stats_dics.append(vars(m))
                     predictions_dict[m.name] = m.predictions
-                    if m.precision >= .60
+                    if m.precision >= .6:
                         if plots == 'show':
                             m.plot_precision_recall(False, True, name + 'pr' + '.png')
                             m.plot_roc(False, True, name + 'roc')
