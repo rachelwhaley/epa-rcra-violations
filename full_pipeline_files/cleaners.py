@@ -4,18 +4,19 @@ import pandas as pd
 cleaning functions for the epa pipeline
 '''
 
-def clean_converttodatetime_dashes(EVALS, date_col):
-    EVALS[date_col] = pd.to_datetime(EVALS.EVALUATION_START_DATE,
+def clean_converttodatetime_dashes(df, date_col, start_date):
+    df[date_col] = pd.to_datetime(df.EVALUATION_START_DATE,
                                     format='%m/%d/%Y', errors='coerce')
     oor_decade_markers = {'1920-01-01': 100, '1930-01-01': 60, '1940-01-01': 50,
                          '1960-01-01': 30, '1970-01-01': 20, '1980-01-01': 10}
     for k, v in oor_decade_markers.items():
         marker = pd.to_datetime(k)
-        EVALS[date_col] = \
-        EVALS[date_col].apply(lambda x: x + pd.DateOffset(years=v)
+        df[date_col] = \
+        df[date_col].apply(lambda x: x + pd.DateOffset(years=v)
                                             if x < marker else x)
+    df = df[df[date_col] >= start_date]
 
-def clean_and_convert_to_datetime_slashes(df, stand_form_col):
+def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
     '''
     looks for out of range dates and brings them to range
     '''
@@ -35,7 +36,9 @@ def clean_and_convert_to_datetime_slashes(df, stand_form_col):
     df[stand_form_col] = df[['M','D', 'Y']].apply(lambda x: '/'.join(x), axis = 1)
     df[stand_form_col] = df.DATE_VIOLATION_DETERMINED.astype('datetime64')
     df.drop(['M','D','Y'], axis=1, inplace=True)
+    df = df[df[stand_form_col] >= start_date]
 
-def yr_month_to_datetime(df, year_month_col):
+def yr_month_to_datetime(df, year_month_col, start_date):
     df[year_month_col] = pd.to_datetime(df[year_month_col], format='%Y%m',
                                         errors='coerce')
+    df = df[df[year_month_col] >= start_date]
