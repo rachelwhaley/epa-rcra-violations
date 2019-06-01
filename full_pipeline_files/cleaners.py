@@ -14,7 +14,10 @@ def clean_converttodatetime_dashes(df, date_col, start_date):
         df[date_col] = \
         df[date_col].apply(lambda x: x + pd.DateOffset(years=v)
                                             if x < marker else x)
-    df = df[df[date_col] >= start_date]
+
+    start_date = pd.to_datetime(start_date)
+
+    return df[df[date_col] >= start_date]
 
 def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
     '''
@@ -22,7 +25,7 @@ def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
     '''
     oor_dict = {'19': 2000, '1919': 100, '1943': 50, '1971': 20, '1974': 20,
                '1979': 18}
-    df[['M','D','Y']] = df[stand_form_col].str.split('/', expand=True)
+    df[['M','D','Y']] = df[stand_form_col].str.split(pat='/', expand=True)
     df['Y'] = df.Y.astype(int)
 
     
@@ -33,12 +36,16 @@ def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
         else:
             df['Y'] = df['Y'].apply(lambda x: x + value if x == k else x)
     df['Y'] = df.Y.astype('str')
-    df[stand_form_col] = df[['M','D', 'Y']].apply(lambda x: '/'.join(x), axis = 1)
-    df[stand_form_col] = df.DATE_VIOLATION_DETERMINED.astype('datetime64')
+    df[stand_form_col] = df[['Y','M','D']].apply(lambda x: '-'.join(x), axis = 1)
+    df[stand_form_col] = df[stand_form_col].astype('datetime64')
     df.drop(['M','D','Y'], axis=1, inplace=True)
-    df = df[df[stand_form_col] >= start_date]
+    start_date=pd.to_datetime(start_date)
+
+    return df[(df[stand_form_col] > start_date)]
 
 def yr_month_to_datetime(df, year_month_col, start_date):
     df[year_month_col] = pd.to_datetime(df[year_month_col], format='%Y%m',
                                         errors='coerce')
-    df = df[df[year_month_col] >= start_date]
+    start_date=pd.to_datetime(start_date)
+
+    return df[df[year_month_col] > start_date]
