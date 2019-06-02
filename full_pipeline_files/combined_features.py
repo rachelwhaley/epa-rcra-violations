@@ -359,8 +359,7 @@ def create_eval_features(facilities_df, evals_df):
     violation_sums = evals_df.groupby("ID_NUMBER")['FOUND_VIOLATION_01'].sum().reset_index().rename(
         columns={'FOUND_VIOLATION_01': 'Sum_Violations'}).sort_values("Sum_Violations", ascending=False)
 
-    facilities_w_violations = pd.merge(facilities_w_counts, violation_sums, left_on='ID_NUMBER', right_on='ID_NUMBER',
-                                       how='left')
+    facilities_w_violations = pd.merge(facilities_w_counts, violation_sums, left_on='ID_NUMBER', right_on='ID_NUMBER', how='left')
 
     facilities_w_violations["PCT_EVALS_FOUND_VIOLATION"] = facilities_w_violations["Sum_Violations"] / \
                                                            facilities_w_violations["EvalCount"]
@@ -374,8 +373,7 @@ def create_eval_features(facilities_df, evals_df):
     max_date = evals_df.groupby("ID_NUMBER").agg({'EVALUATION_START_DATE': 'max'})[
         ['EVALUATION_START_DATE']].reset_index().rename(columns={'EVALUATION_START_DATE': 'MostRecentEval'})
 
-    facilities_w_violations = pd.merge(facilities_w_violations, max_date, left_on='ID_NUMBER', right_on='ID_NUMBER',
-                                       how='left')
+    facilities_w_violations = pd.merge(facilities_w_violations, max_date, left_on='ID_NUMBER', right_on='ID_NUMBER', how='left')
 
 
     facilities_w_violations["NumMonthsSinceEval"] = (datetime.today() - facilities_w_violations["MostRecentEval"]) / (

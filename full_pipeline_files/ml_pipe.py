@@ -1,8 +1,8 @@
+import model_analyzer as ma
 import numpy as np
 import pandas as pd
 import datetime
 import seaborn as sns
-import model_analyzer as ma
 from sklearn.dummy import DummyClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import (BaggingClassifier, AdaBoostClassifier,
@@ -40,7 +40,7 @@ def compare_tdelta_generate_binary(df, col_to_compare, threshold, new_col):
     binary values
     output: that dataseries now has a column for the binary values
     '''
-    df[new_col] = np.where(df[col_to_compare]<= pd.Timedelta(threshold), 1, 0)
+    df[new_col] = np.where(df[col_to_compare] >= pd.Timedelta(threshold), 1, 0)
 
 def id_potential_features(df):
     '''
@@ -59,9 +59,9 @@ def strings_to_dummies(df, strcols):
     turn the string columns we identified into dummies and generate a new
     df with these dummies to act as features
     '''
-    features = pd.get_dummies(df[strcols], dummy_na=True,
-                              columns=strcols, drop_first=True)
-    return features
+    temp = pd.get_dummies(df, dummy_na=True, columns=strcols)
+    df[list(temp.columns)] = temp
+
 
 def add_discretized_float_cols(og_df, feature_df, fltcols):
     '''
@@ -89,29 +89,41 @@ def fillzero_mean(df, col):
     needs a int or float dataseries where nans have already been turned to 0's
     '''
     imputation = df[col].notnull().mean()
+    df[col].fillna(imputation, inplace=True)
     df[col].replace(0, imputation, inplace = True)
 
 #split data (temporal and x/y)
-def temp_holdout(df, date_col, tt_period, wait_period):
+def temp_holdout(df, date_col, period, holdout):
     '''
-    big period in months, wait period in days
-    wait period is holdout period after train or test period
+    rolling window in months, holdout in months
+    returns list of training and testing sets
     '''
-    period = pd.DateOffset(months=tt_period)
-    holdout = pd.DateOffset(days=wait_period)
+    period = pd.DateOffset(months=period)
+    holdout = pd.DateOffset(months=holdout)
+
     first = df[date_col].min()
+    train_ends = first + period
+    testing_begins = train_ends + holdout
     last = df[date_col].max()
-    next_edge = first + period
-    rv = []
+    trains = []
+    tests = []
 
-    while next_edge < last:
-        rv.append(df[(df[date_col] >= first) & (df[date_col] < next_edge)])
-        first = next_edge + holdout
-        next_edge = next_edge + period + holdout
+    while (testing_begins + period) <= last:
+        trains.append(df[(df[date_col] >= first) & (df[date_col] < train_ends)])
+        tests.append(df[(df[date_col] >= testing_begins) & (df[date_col] <
+                                                            (testing_begins +
+                                                            period))])
+        first += period
+        train_ends += period
+        testing_begins += period
+        print('training_begins: ', trains[-1][date_col].min())
+        print('training_ends: ', trains[-1][date_col].max())
+        print('testing_begins: ', tests[-1][date_col].min())
+        print('testing_ends: ', tests[-1][date_col].max())
 
-    return rv
+    return trains, tests
 
-def seperate_ids_feats_ys(periods):
+def seperate_ids_feats_ys(periods, id_cols, y_col, feature_columns):
     '''
     takes a list of periods from temp_holdout() and returns a list of lists of
     each period's ids, features, and ys
@@ -119,11 +131,11 @@ def seperate_ids_feats_ys(periods):
     rv = []
 
     for x in periods:
-        rv.append([x.iloc[:, [-2, -3]], x.iloc[:, :-3], x.iloc[:, -1]])
+        rv.append([x[id_cols], x[feature_columns], x[y_col]])
         
     for x in rv:
         for df in x:
-            print(df.shape)
+            print(len(df.index))
 
     return rv
 
@@ -145,8 +157,8 @@ def define_clfs_params(grid_size):
         'NB': GaussianNB(),
         'DT': DecisionTreeClassifier(),
         'SGD': SGDClassifier(loss="log", penalty="l2"),
-        'KNN': KNeighborsClassifier(n_neighbors=3), 
-        'BAG': BaggingClassifier(DecisionTreeClassifier(), max_samples= 0.5, n_estimators = 20) 
+        'KNN': KNeighborsClassifier(n_neighbors=3),
+        'BAG': BaggingClassifier(DecisionTreeClassifier(), max_samples= 0.5, n_estimators = 20)
             }
 
     large_grid = { 
@@ -154,8 +166,8 @@ def define_clfs_params(grid_size):
     'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10], 'solver': ['liblinear']},
     'SGD': { 'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
     'ET': { 'n_estimators': [1,10,100,1000,10000], 'criterion' : ['gini', 'entropy'] ,'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'n_jobs': [-1]},
-    'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000,10000]},
-    'GB': {'n_estimators': [1,10,100,1000,10000], 'learning_rate' : [0.001,0.01,0.05,0.1,0.5],'subsample' : [0.1,0.5,1.0], 'max_depth': [1,3,5,10,20,50,100]},
+    'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000]},
+    'GB': {'n_estimators': [1,10,100,1000,10000], 'learning_rate' : [0.01,0.1,0.5],'subsample' : [0.1,0.5,1.0], 'max_depth': [1,3,5,10,20,50,100]},
     'NB' : {},
     'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [1,5,10,20,50,100],'min_samples_split': [2,5,10]},
     'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10],'kernel':['linear']},
@@ -165,16 +177,16 @@ def define_clfs_params(grid_size):
     
     small_grid = { 
     'RF':{'n_estimators': [10,100], 'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
-    'LR': { 'penalty': ['l1','l2'], 'C': [0.001,0.1,1], 'solver': ['saga', 'liblinear']},
-    'SGD': { 'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
-    'ET': { 'n_estimators': [10,100], 'criterion' : ['gini', 'entropy'] ,'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
-    'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000,10000]},
-    'GB': {'n_estimators': [10,100], 'learning_rate' : [0.1,0.5],'subsample' : [0.5,1.0], 'max_depth': [5,50]},
+    'LR': { 'penalty': ['l1','l2'], 'C': [0.001,0.1,1], 'solver': ['liblinear']},
+    'SGD': { 'loss': ['log','perceptron'], 'penalty': ['l2','l1'], 'max_iter':[1000], 'tol':[1]},
+    'ET': { 'n_estimators': [10,100], 'criterion' : ['gini', 'entropy'] ,'max_depth': [5], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
+    'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [10,100,500]},
+    'GB': {'n_estimators': [10,100], 'learning_rate' : [0.5],'subsample' : [0.5,1.0], 'max_depth': [5]},
     'NB' : {},
-    'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [1, 5, 10, None],'min_samples_split': [2,5,10]},
+    'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [1, 5, None],'min_samples_split': [2,5,10]},
     'SVM' :{'C' :[0.1],'kernel':['linear']},
-    'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],'algorithm': ['auto','ball_tree','kd_tree']},
-    'BAG': {'n_estimators' : [5,10], 'max_samples' : [.25, .5] } 
+    'KNN' :{'n_neighbors': [10,50],'weights': ['uniform','distance'],'algorithm': ['auto']},
+    'BAG': {'n_estimators' : [5,10], 'max_samples' : [.25, .5] }
            }
     
     test_grid = { 
@@ -202,11 +214,13 @@ def define_clfs_params(grid_size):
         return 0, 0
 
 #run and analyze models
-def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_test):
+def model_analyzer(clfs, grid, plots, prec_limit, thresholds, x_train, y_train, x_test, y_test):
     '''
     inputs: clfs dict of default models
             selected grid
             plots ('show' to see all plots, 'save' to see save all plots)
+            prec_limit - set a precision limit models must surpass to be graphed
+            thresholds - list of thresholds to iterate through
             split training and testing data
     outputs: df of all models and their predictions/metrics
              df of all predictions with model id as column name for later use
@@ -214,28 +228,56 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
     '''
 
     stats_dics = []
-    predictions_dict = {}
+    models = []
 
     for klass, model in clfs.items():
         parameter_values = grid[klass]
         for p in ParameterGrid(parameter_values):
             try:
                 name = klass + str(p)
-                for thresh in thresholds:
-                    m = ma.ClassifierAnalyzer(model, p, name, thresh, x_train, y_train,
-                                              x_test, y_test)
-                    stats_dics.append(vars(m))
-                    predictions_dict[m.name] = m.predictions
-                    if m.precision >= .6:
-                        if plots == 'show':
-                            m.plot_precision_recall(False, True, name + 'pr' + '.png')
-                            m.plot_roc(False, True, name + 'roc')
-                        if plots == 'save':
-                            m.plot_precision_recall(True, False, name + 'pr' + '.png')
-                            m.plot_roc(True, False, name + 'pr')
+                m = ma.ClassifierAnalyzer(model, p, name, thresholds,
+                                            plots, x_train, y_train, x_test,
+                                            y_test)
+                stats = vars(m)
+                stats_dics.append(stats)
+                print(m.model)
+                models.append(m)
+                if plots == 'show':
+                    m.plot_precision_recall(False, True, None)
+                    m.plot_roc(False, True, None)
+                elif plots == 'save':
+                    m.plot_precision_recall(True, False, name + 'pr.png')
+                    m.plot_roc(True, False, name + 'roc.png')
+                elif plots == 'both':
+                    m.plot_precision_recall(True, True, name + 'pr.png')
+                    m.plot_roc(True, True, name + 'roc.png')
 
             except IndexError as e:
                     print('Error:',e)
                     continue
 
-    return stats_dics, predictions_dict
+    return stats_dics, models
+
+def model_analyzer_over_time(clfs, grid, plots, prec_limit, thresholds,
+                             list_of_x_train, list_of_y_train, list_of_x_test,
+                             list_of_y_test, test_feats):
+    '''
+    iterate through a list of x train dataframes and make an aggregate list of
+    stats dics and models for each model in each timeframe. this list will be
+    used to determine the best possible model.
+    '''
+    big_stats_dics = []
+    big_models = []
+    temp_stats = []
+    temp_models = []
+    for i, x in enumerate(list_of_x_train):
+        temp_stats, temp_models = model_analyzer(clfs, grid, plots, prec_limit,
+                                                 thresholds, x.loc[:, test_feats],
+                                                 list_of_y_train[i],
+                                                 list_of_x_test[i].loc[:, test_feats],
+                                                 list_of_y_test[i])
+        big_stats_dics.extend(temp_stats)
+        big_models.extend(temp_models)
+
+    return big_stats_dics, big_models
+        
