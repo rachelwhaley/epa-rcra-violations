@@ -40,6 +40,7 @@ def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
     df[stand_form_col] = df[stand_form_col].astype('datetime64')
     df.drop(['M','D','Y'], axis=1, inplace=True)
     start_date=pd.to_datetime(start_date)
+    print(df[stand_form_col].dtype)
 
     return df[(df[stand_form_col] > start_date)]
 

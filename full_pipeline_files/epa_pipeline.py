@@ -53,7 +53,7 @@ def generate_features(p, facs_df):
                                     p[1][period],
                                     p[2][period]))
         train_test_with_features.append(
-            cf.create_all_features(facs_df, [3][period],
+            cf.create_all_features(facs_df, p[3][period],
                                     p[4][period],
                                     p[5][period]))
 
@@ -76,13 +76,17 @@ def main():
     periods = generate_features(trains + tests, facs)
     #ok still gotta get generate_features to work herer
     print(len(periods))
+    train_count = 0
+    test_count = 0
     for i, x in enumerate(periods):
         if i % 2 == 0:
-            name = 'train_period{}'.format(i)
+            train_count += 1
+            name = 'train_period{}'.format(train_count)
             x.to_csv(name + '.csv')
             print('saved: ', name)
         else:
-            name = 'test_period{}'.format(i - l)
+            test_count += 1
+            name = 'test_period{}'.format(test_count)
             x.to_csv(name + '.csv')
             print('saved: ', name)
 
