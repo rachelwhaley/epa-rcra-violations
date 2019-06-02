@@ -21,23 +21,36 @@ class ClassifierAnalyzer:
     CA takes a model and a set of parameters from
     class is intended to store all metrics of model applied to data in one place
     '''
-    identifier = 0
-    def __init__(self, model, parameters, name, threshold, x_train, y_train, x_test,
-                 y_test):
+    def __init__(self, model, parameters, name, thresholds, plots, x_train, y_train,
+                 x_test, y_test):
         self.params = parameters
         self.model = model.set_params(**parameters)
         self.scores = classify(x_train, y_train, x_test, self.model)
         self.truth = y_test
-        self.predictions = predict(self.scores, threshold)
-        self.accuracy = accuracy(self.truth, self.predictions)
-        self.precision = precision(self.truth, self.predictions)
-        self.recall = recall(self.truth, self.predictions)
-        self.f1 = 2 * (self.precision * self.recall) / (self.precision + self.recall)
-        self.name = None
-        ClassifierAnalyzer.identifier += 1
+        self.t = thresholds
+        self.predictions_metrics_matrix = self.make_prediction_matrix()
+        self.name = name
+        self.roc_auc = None
 
     def __repr__(self):
-        return str(self.id)
+        return str(self.name)
+
+    def make_prediction_matrix(self):
+        rv_dic = {}
+        for thresh in self.t:
+            x = 1 - thresh
+            preds = 'predictions_{}pct'.format(x)
+            a = 'precision_{}pct'.format(x)
+            b = 'recall_{}pct'.format(x)
+            c = 'f1_{}pct'.format(x)
+            rv_dic[preds] = rv_dic.get(preds, predict(self.scores, thresh))
+            prec = precision(self.truth, rv_dic[preds])
+            rec = recall(self.truth, rv_dic[preds])
+            rv_dic[a] = prec
+            rv_dic[b] = rec
+            rv_dic[c] = (prec * rec * 2) / (prec + rec)
+
+        return pd.DataFrame(rv_dic)
 
     def plot_precision_recall(self, save, show, name):
         precision_curve, recall_curve, pr_thresholds = precision_recall_curve(

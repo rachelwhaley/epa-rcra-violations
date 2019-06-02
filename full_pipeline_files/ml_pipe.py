@@ -235,9 +235,9 @@ def model_analyzer(clfs, grid, plots, prec_limit, thresholds, x_train, y_train, 
         for p in ParameterGrid(parameter_values):
             try:
                 name = klass + str(p)
-                for thresh in thresholds:
-                    m = ma.ClassifierAnalyzer(model, p, name, thresh, x_train, y_train,
-                                              x_test, y_test)
+                m = ma.ClassifierAnalyzer(model, p, name, thresholds,
+                                            plots, x_train, y_train, x_test,
+                                            y_test)
                     stats = vars(m)
                     stats_dics.append(stats)
                     print(m.model)
