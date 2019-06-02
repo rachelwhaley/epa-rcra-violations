@@ -100,20 +100,22 @@ def temp_holdout(df, date_col, period, holdout):
     '''
     period = pd.DateOffset(months=period)
     holdout = pd.DateOffset(months=holdout)
-    
+
     first = df[date_col].min()
-    next_edge = first + period
-    testing_begins = next_edge + holdout
+    train_ends = first + period
+    testing_begins = train_ends + holdout
     last = df[date_col].max()
     trains = []
     tests = []
 
     while (testing_begins + period) <= last:
-        trains.append(df[(df[date_col] >= first) & (df[date_col] < next_edge)])
-        tests.append(df[(df[date_col] >= testing_begins) & (df[date_col] < (testing_begins + period))])
-        first = first + period
-        next_edge = next_edge + period
-        testing_begins = testing_begins + period
+        trains.append(df[(df[date_col] >= first) & (df[date_col] < train_ends)])
+        tests.append(df[(df[date_col] >= testing_begins) & (df[date_col] <
+                                                            (testing_begins +
+                                                            period))])
+        first += period
+        train_ends += period
+        testing_begins += period
         print('training_begins: ', trains[-1][date_col].min())
         print('training_ends: ', trains[-1][date_col].max())
         print('testing_begins: ', tests[-1][date_col].min())
@@ -233,20 +235,22 @@ def model_analyzer(clfs, grid, plots, prec_limit, thresholds, x_train, y_train, 
         for p in ParameterGrid(parameter_values):
             try:
                 name = klass + str(p)
-                for thresh in thresholds:
-                    m = ma.ClassifierAnalyzer(model, p, name, thresh, x_train, y_train,
-                                              x_test, y_test)
-                    stats = vars(m)
-                    stats_dics.append(stats)
-                    print(m.model)
-                    models.append(m)
-                if m.precision >= prec_limit:
-                    if plots == 'show':
-                        m.plot_precision_recall(False, True, name + 'pr' + '.png')
-                        m.plot_roc(False, True, name + 'roc')
-                    elif plots == 'save':
-                        m.plot_precision_recall(True, False, name + 'pr' + '.png')
-                        m.plot_roc(True, False, name + 'pr')
+                m = ma.ClassifierAnalyzer(model, p, name, thresholds,
+                                            plots, x_train, y_train, x_test,
+                                            y_test)
+                stats = vars(m)
+                stats_dics.append(stats)
+                print(m.model)
+                models.append(m)
+                if plots == 'show':
+                    m.plot_precision_recall(False, True, None)
+                    m.plot_roc(False, True, None)
+                elif plots == 'save':
+                    m.plot_precision_recall(True, False, name + 'pr.png')
+                    m.plot_roc(True, False, name + 'roc.png')
+                elif plots == 'both':
+                    m.plot_precision_recall(True, True, name + 'pr.png')
+                    m.plot_roc(True, True, name + 'roc.png')
 
             except IndexError as e:
                     print('Error:',e)
