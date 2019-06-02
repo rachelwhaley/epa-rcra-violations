@@ -238,17 +238,19 @@ def model_analyzer(clfs, grid, plots, prec_limit, thresholds, x_train, y_train, 
                 m = ma.ClassifierAnalyzer(model, p, name, thresholds,
                                             plots, x_train, y_train, x_test,
                                             y_test)
-                    stats = vars(m)
-                    stats_dics.append(stats)
-                    print(m.model)
-                    models.append(m)
-                if m.precision >= prec_limit:
-                    if plots == 'show':
-                        m.plot_precision_recall(False, True, name + 'pr' + '.png')
-                        m.plot_roc(False, True, name + 'roc')
-                    elif plots == 'save':
-                        m.plot_precision_recall(True, False, name + 'pr' + '.png')
-                        m.plot_roc(True, False, name + 'pr')
+                stats = vars(m)
+                stats_dics.append(stats)
+                print(m.model)
+                models.append(m)
+                if plots == 'show':
+                    m.plot_precision_recall(False, True, None)
+                    m.plot_roc(False, True, None)
+                elif plots == 'save':
+                    m.plot_precision_recall(True, False, name + 'pr.png')
+                    m.plot_roc(True, False, name + 'roc.png')
+                elif plots == 'both':
+                    m.plot_precision_recall(True, True, name + 'pr.png')
+                    m.plot_roc(True, True, name + 'roc.png')
 
             except IndexError as e:
                     print('Error:',e)
