@@ -214,7 +214,7 @@ def define_clfs_params(grid_size):
         return 0, 0
 
 #run and analyze models
-def model_analyzer(clfs, grid, plots, prec_limit, thresholds, x_train, y_train, x_test, y_test):
+def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_test):
     '''
     inputs: clfs dict of default models
             selected grid
@@ -258,9 +258,9 @@ def model_analyzer(clfs, grid, plots, prec_limit, thresholds, x_train, y_train, 
 
     return stats_dics, models
 
-def model_analyzer_over_time(clfs, grid, plots, prec_limit, thresholds,
-                             list_of_x_train, list_of_y_train, list_of_x_test,
-                             list_of_y_test, test_feats):
+def model_analyzer_over_time(clfs, grid, plots, list_of_x_train, thresholds,
+                             list_of_y_train, list_of_x_test, list_of_y_test,
+                             feat_list):
     '''
     iterate through a list of x train dataframes and make an aggregate list of
     stats dics and models for each model in each timeframe. this list will be
@@ -271,13 +271,13 @@ def model_analyzer_over_time(clfs, grid, plots, prec_limit, thresholds,
     temp_stats = []
     temp_models = []
     for i, x in enumerate(list_of_x_train):
-        temp_stats, temp_models = model_analyzer(clfs, grid, plots, prec_limit,
-                                                 thresholds, x.loc[:, test_feats],
+        temp_stats, temp_models = model_analyzer(clfs, grid, plots, thresholds,
+                                                 x.loc[:, feat_list],
                                                  list_of_y_train[i],
                                                  list_of_x_test[i].loc[:, test_feats],
                                                  list_of_y_test[i])
-        big_stats_dics.extend(temp_stats)
-        big_models.extend(temp_models)
+        big_stats_dics.append(temp_stats)
+        big_models.append(temp_models)
 
     return big_stats_dics, big_models
         

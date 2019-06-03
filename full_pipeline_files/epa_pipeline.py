@@ -59,6 +59,7 @@ def generate_features(p, facs_df):
 
     return train_test_with_features
 
+
 def main():
     if len(sys.argv) != 6:
         print("Usage: analyze_projects.py \
