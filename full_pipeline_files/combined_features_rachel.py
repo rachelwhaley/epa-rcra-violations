@@ -90,11 +90,11 @@ def time_late(violations_df, max_date, facilities_df):
             for gb_bool in [(avg, False), (sums, False), (count, False),\
                 (last, True)]:
                 gb, bool_val = gb_bool
-                factlities_with_features_df = pd.merge(factlities_with_features_df, gb,\
+                facilities_with_features_df = pd.merge(facilities_with_features_df, gb,\
                     on=group, how='left')
                 if bool_val:
                     to_fill = "last " + label
-                    factlities_with_features_df[to_fill] = factlities_with_features_df[to_fill]\
+                    facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
                         .fillna(value=float('Inf'))
 
     return factlities_with_features_df
@@ -202,28 +202,56 @@ def num_inspections(evals_df, max_date, facilities_df):
     states = 'STATE_CODE'
     al = 'ACTIVITY_LOCATION'
 
-    factlities_with_features_df = create_final(evals_df, facilities_df)
+    facilities_crop = facilities_df[[ids, states, zips]].groupby([ids, states, zips]).size().reset_index()
+    print(facilities_crop.head())
+    print(evals_df.head())
 
+    evals_df = pd.merge(evals_df, facilities_crop, on=ids, how='left').reset_index()
+    print(evals_df.head())
+
+    # if there haven't been any inspections, will set to the max # of possible days in dataset
+    evals_df[date] = pd.to_datetime(evals_df[date])
+    max_val_for_na = (evals_df[date].max() - evals_df[date].min()).days
+    print("DEBUGGING NUM INSPECTS")
+    # print(max_val_for_na)
+
+    # find the number of evals by state
+    sums_state = evals_df.groupby(states).size().reset_index().rename(columns={0: "NumEvalsInMyState"}).fillna(value=0)
+    print(sums_state.head())
+
+    facilities_result = pd.merge(facilities_df, sums_state, on=states, how='left')
+
+    # sums_zip = evals_df.groupby(zips).size().reset_index().rename(columns={0: "NumEvalsInMyZIP"}).fillna(value=0)
+    # facilities_result = pd.merge(facilities_result, sums_zip, on=zips, how='left')
+
+    # latest_eval_state = evals_df.loc[evals_df.groupby(states)[date].idxmin()].reset_index().rename(columns={0: "NumEvalsInMyState"}).fillna(value=max_val_for_na)
+    # facilities_result = pd.merge(facilities_result, latest_eval_state, on=states, how='left')
+
+
+    print(facilities_result.info())
+    facilities_result.head().to_csv("debugging_numins.csv")
+
+
+    """
     # for group in [ids, al]:
     for group in [ids, zips, states]:
         sums = evals_df.groupby(group) \
             .size().reset_index()
         last = evals_df.groupby(group) \
             [date].max() \
-            .apply(lambda x: (max_date - x).days) \
+            .apply(lambda x: (max_date - pd.to_datetime(x)).days) \
             .reset_index().rename(columns={date: group + " last"})
         for gb_bool in [(sums, False), (last, True)]:
             gb, bool_val = gb_bool
-            factlities_with_features_df = pd.merge( \
-                factlities_with_features_df, gb, \
-                on=group, how='left')
+            facilities_df = pd.merge(facilities_df, gb, on=group, how='left')
             if bool_val:
                 to_fill = group + " last"
-                factlities_with_features_df[to_fill] = factlities_with_features_df[to_fill] \
+                facilities_df[to_fill] = facilities_df[to_fill] \
                     .fillna(value=float('Inf'))
+    """
 
-    return factlities_with_features_df.rename( \
-        columns={'0_x': "eval_sum_zips", '0_y': "eval_sum_states"})
+    # return facilities_df.rename(columns={'0_x': "eval_sum_zips", '0_y': "eval_sum_states"})
+    return
 
 # TODO: check in on this function
 def corrective_event(date1, date2, df_all_data):
@@ -374,12 +402,12 @@ def snc_info(facilities_df, snc_df):
     snc_df["SNC_Y"] = pd.Series(np.where(snc_df.SNC_FLAG.str.contains("Y"), 1, 0), snc_df.index)
 
     snc_df["SNC_N"] = pd.Series(np.where(snc_df.SNC_FLAG.str.contains("N"), 1, 0), snc_df.index)
-    print(snc_df.head())
+    # print(snc_df.head())
 
     # gapminder['year']==2002
     snc_y = snc_df[snc_df['SNC_Y'] == 1]
     snc_n = snc_df[snc_df['SNC_N'] == 1]
-    print(snc_y.info())
+    # print(snc_y.info())
 
     # snc_n = snc_df.SNC_FLAG.str.contains("N")
 
@@ -398,7 +426,7 @@ def snc_info(facilities_df, snc_df):
     facilities_df = pd.merge(facilities_df, max_date_n, on='ID_NUMBER', how='left')
 
     print("DEBUG1")
-    print(facilities_df['MostRecentSNC_Y'])
+    # print(facilities_df['MostRecentSNC_Y'])
     facilities_df["MostRecentSNC_Y"] = pd.to_datetime(facilities_df["MostRecentSNC_Y"],
                                                                format='%Y%m', errors='coerce')
     facilities_df["MostRecentSNC_N"] = pd.to_datetime(facilities_df["MostRecentSNC_N"],
@@ -407,9 +435,9 @@ def snc_info(facilities_df, snc_df):
     # facilities_df["More_Recent_SNC_Yes"] = facilities_df["MostRecentSNC_Y"] > facilities_df["MostRecentSNC_N"]
     facilities_df["More_Recent_SNC_Yes"] = np.where((facilities_df['MostRecentSNC_Y'] >= facilities_df['MostRecentSNC_N']), True, False)
 
-    print(facilities_df.info())
-    print("PRINTING MORE RECENT SNC YES DEBUG")
-    print(facilities_df['MostRecentSNC_Y'])
+    # print(facilities_df.info())
+    # print("PRINTING MORE RECENT SNC YES DEBUG")
+    # print(facilities_df['MostRecentSNC_Y'])
 
     return facilities_df
 
@@ -449,6 +477,8 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
 
     max_date = datetime(2000, 1, 1, 0, 0)
 
+
+    # TODO: THESE ARE NOT WORKING
     # facilities_w_time_late = time_late(violations_df, max_date, facilities_nearby_nums)
     # facilities_w_num_ins_nearby = num_inspections(evals_df, max_date, facilities_nearby_nums)
     # facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_num_ins_nearby, on="ID_NUMBER", how="left")
@@ -459,12 +489,11 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
     # print(facilities_w_time_late.info())
     # return facilities_w_time_late
 
+    # print(facilities_nearby_nums.info())
+    # return facilities_nearby_nums
+
     print(facilities_nearby_nums.info())
     return facilities_nearby_nums
-
-    # print(facilities_w_num_ins_nearby.info())
-    # return
-
 
 def main():
     if len(sys.argv) != 5:
