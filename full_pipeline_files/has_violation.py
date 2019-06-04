@@ -62,8 +62,7 @@ def flag_lqg(facilities_df):
 
     return facilities_df
 
-
-if __name__ == "__main__":
+def go():
     violation_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
     has_vios_df = has_violation(facilities_df, violation_df, 2011, 2018)
@@ -77,5 +76,7 @@ if __name__ == "__main__":
 
     print(has_vios_df.head())
 
+    return has_vios
 
-
+if __name__ == "__main__":
+    return go()
