@@ -513,6 +513,7 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
     print(facilities_nearby_nums.info())
     return facilities_nearby_nums
 
+
 def main():
     if len(sys.argv) != 5:
         print("Usage: analyze_projects.py \
