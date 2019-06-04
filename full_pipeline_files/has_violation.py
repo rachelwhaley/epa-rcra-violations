@@ -5,6 +5,7 @@ has had a violation within the time frame
 import pandas as pd
 import numpy as np
 import datetime
+import cleaners
 
 def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     '''
@@ -32,7 +33,7 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     facs_by_year = pd.DataFrame(data=data)
     # return facs_by_year
 
-    violations_df[eval_year] = violations_df['Y'].astype(int)
+    
 
 
     violations_df['HasViolation'] = 1
@@ -118,6 +119,7 @@ def time_late_early(violations_df, max_date, facilities_df):
 
     for col in [actual, scheduled]:
         violations_df[col] = pd.to_datetime(violations_df[col])
+        print(col + " to datetime")
 
     violations_df[diff] = violations_df[actual] - violations_df[scheduled]
     violations_df[diff] = violations_df[diff]\
@@ -130,7 +132,6 @@ def time_late_early(violations_df, max_date, facilities_df):
     for col in [early, late]:
         filt = (violations_df[col] == 1)
         our_db = violations_df[filt]
-        #for group in [ids, al]:
         for group in [ids, zips, states]:
             label = col + " " + group
             avg = our_db.groupby(group)\
@@ -162,20 +163,26 @@ def time_late_early(violations_df, max_date, facilities_df):
 def go():
     ids = 'ID_NUMBER'
     date = 'DATE_VIOLATION_DETERMINED'
+    eval_year = 'YEAR_EVALUATED'
 
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
+    print('cleaning')
+    violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
+    print('cleaned')
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
     
     violations_df[['M','D','Y']] = violations_df[date]\
         .str.split('/', expand=True)
+    violations_df[eval_year] = violations_df['Y'].astype(int)
 
     has_vios_df, years = has_violation(facilities_df, violations_df)
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[[ids, "IsLQG", "IsTSDF"]], on=ids, how="left")
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
+
     for y in years:
-        filt = violations_df['Y'] == y
+        filt = violations_df[eval_year] == y
         vio_filt = violations_df[filt]
         max_date = datetime.datetime(y, 12, 31, 23, 59)
         vio_filt = time_late_early(vio_filt, max_date, facilities_df)
