@@ -10,7 +10,7 @@ import cleaners as cl
 import sys
 
 '''
-read in and begin cleaning constituent datasets 
+read in and begin cleaning constituent datasets
 '''
 
 def temp_holdout_prep(facilities_csv, evaluations_csv, violations_csv,
@@ -35,27 +35,31 @@ def temp_holdout_prep(facilities_csv, evaluations_csv, violations_csv,
 
 #create temporal test and train features and true Y values
 def temporal_split(evals_df, vios_df, snc_df):
-    eval_train, eval_test = ml.temp_holdout(evals_df, 'EVALUATION_START_DATE' , 24, 24)
-    vio_train, vio_test = ml.temp_holdout(vios_df, 'DATE_VIOLATION_DETERMINED', 24, 24)
-    snc_train, snc_test = ml.temp_holdout(snc_df, 'YRMONTH', 24, 24)
+    eval_train, eval_test, etr_ends, ete_ends = ml.temp_holdout(evals_df,
+                                                              'EVALUATION_START_DATE', 24, 24)
+    vio_train, vio_test vtr_ends, vte_ends = ml.temp_holdout(vios_df, 'DATE_VIOLATION_DETERMINED', 24, 24)
+    snc_train, snc_test, str_ends, ste_ends = ml.temp_holdout(snc_df, 'YRMONTH', 24, 24)
 
     trains = [eval_train, vio_train, snc_train]
     tests = [eval_test, vio_test, snc_test]
+    train_ends = etr_ends
+    test_ends = ete_ends
 
-    return trains, tests
+    return trains, tests, train_ends, test_ends
 
-def generate_features(p, facs_df):
+def generate_features(trains, tests, train_ends, test_ends, facs_df):
+    p = trains + tests
     train_test_with_features = []
 
     for period, dfs in enumerate(p[0]):
+
         train_test_with_features.append(
-            cf.create_all_features(facs_df, dfs,
-                                    p[1][period],
-                                    p[2][period]))
+            cf.create_all_features(facs_df, dfs, p[1][period], p[2][period],
+                                   train_ends[period], test_ends[period]))
         train_test_with_features.append(
-            cf.create_all_features(facs_df, p[3][period],
-                                    p[4][period],
-                                    p[5][period]))
+            cf.create_all_features(facs_df, p[3][period], p[4][period],
+                                   p[5][period], train_ends[period],
+                                   test_ends[period]))
 
     return train_test_with_features
 
@@ -67,14 +71,16 @@ def run_models(grid_size, plots, list_of_trainx, list_of_trainy,
     '''
     clfs, grid = ml.define_clfs_params(grid_size)
 
-    ml.model_analyzer_over_time(clfs, grid, plots, thresholds,
-                             list_of_x_train, list_of_y_train, list_of_x_test,
-                             list_of_y_test, feat_list)
+    stats_dic, models = ml.model_analyzer_over_time(clfs, grid, plots, thresholds,
+                                 list_of_x_train, list_of_y_train, list_of_x_test,
+                                 list_of_y_test, feat_list)
+
+        
 def main():
     if len(sys.argv) != 6:
         print("Usage: analyze_projects.py \
         <facilities_filename> <evals_filename> <violations_filename> <snc_filename>\
-              <start_date>, file=sys.stderr")
+              <acs_data_filename> <start_date>, file=sys.stderr")
         sys.exit(1)
 
     # read in data
@@ -85,7 +91,6 @@ def main():
     trains, tests = temporal_split(evals, vios, snc)
     print('temporal_split works')
     periods = generate_features(trains + tests, facs)
-    #ok still gotta get generate_features to work herer
     print(len(periods))
     train_count = 0
     test_count = 0
@@ -100,10 +105,6 @@ def main():
             name = 'test_period{}'.format(test_count)
             x.to_csv(name + '.csv')
             print('saved: ', name)
-
-
-
-
 
 if __name__ == "__main__":
     main()
