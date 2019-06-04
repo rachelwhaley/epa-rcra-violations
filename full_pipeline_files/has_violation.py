@@ -66,7 +66,7 @@ def flag_lqg(facilities_df):
 if __name__ == "__main__":
     violation_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
-    has_vios_df = has_violation(facilities_df, violation_df, 2011, 2013)
+    has_vios_df = has_violation(facilities_df, violation_df, 2011, 2018)
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[['ID_NUMBER', "IsLQG", "IsTSDF"]], on="ID_NUMBER", how="left")
 
