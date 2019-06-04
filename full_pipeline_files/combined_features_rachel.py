@@ -505,10 +505,11 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
 
 
     # TODO: THESE ARE NOT WORKING
-    #(From Esther:) I got this to work on a small set of violations
+    #(From Esther:) I got this to work on a small set of data
     facilities_w_time_late = time_late(violations_df, max_date, facilities_nearby_nums)
-    # facilities_w_num_ins_nearby = num_inspections(evals_df, max_date, facilities_nearby_nums)
-    # facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_num_ins_nearby, on="ID_NUMBER", how="left")
+    facilities_w_num_ins_nearby = num_inspections(evals_df, max_date, facilities_nearby_nums)
+    facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_num_ins_nearby, on="ID_NUMBER", how="left")
+    facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_time_late, on="ID_NUMBER", how="left")
 
     # ADDING ACS FEATURES
     # read_data('evals')
