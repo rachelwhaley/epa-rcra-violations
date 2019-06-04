@@ -54,6 +54,23 @@ def id_potential_features(df):
 
     return str_cols, flt_cols
 
+def select_features(df):
+    """
+    Returns a list of column names of features to use in the model.
+    """
+    # should select only columns that are numeric or dummy
+    features_list = []
+
+    for column in df:
+        if df[column].dtype == 'float64':
+            features_list.append(column)
+        elif df[column].dtype == 'int64':
+            features_list.append(column)
+        elif df[column].dtype == 'uint8':
+            features_list.append(column)
+
+    return features_list
+
 def strings_to_dummies(df, strcols):
     '''
     turn the string columns we identified into dummies and generate a new
@@ -227,7 +244,8 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
     filter placed on plotting to prevent plotting of excessive plots
     '''
 
-    stats_dics = []
+    predictions = pd.DataFrame()
+    stats_df = pd.DataFrame()
     models = []
 
     for klass, model in clfs.items():
@@ -238,9 +256,8 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                 m = ma.ClassifierAnalyzer(model, p, name, thresholds,
                                             plots, x_train, y_train, x_test,
                                             y_test)
-                stats = vars(m)
-                stats_dics.append(stats)
-                print(m.model)
+                pd.concat([predictions, m.predictions], axis=1)
+                pd.concat([stats_df, m.metrics_matrix], axis=0)
                 models.append(m)
                 if plots == 'show':
                     m.plot_precision_recall(False, True, None)
@@ -256,9 +273,11 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                     print('Error:',e)
                     continue
 
-    return stats_dics, models
+    predictions['truth'] = y_test
 
-def model_analyzer_over_time(clfs, grid, plots, list_of_x_train, thresholds,
+    return predictions, stats_df, models
+
+def model_analyzer_over_time(clfs, grid, plots, thresholds, list_of_x_train,
                              list_of_y_train, list_of_x_test, list_of_y_test,
                              feat_list):
     '''
@@ -266,18 +285,23 @@ def model_analyzer_over_time(clfs, grid, plots, list_of_x_train, thresholds,
     stats dics and models for each model in each timeframe. this list will be
     used to determine the best possible model.
     '''
-    big_stats_dics = []
-    big_models = []
-    temp_stats = []
-    temp_models = []
-    for i, x in enumerate(list_of_x_train):
-        temp_stats, temp_models = model_analyzer(clfs, grid, plots, thresholds,
-                                                 x.loc[:, feat_list],
-                                                 list_of_y_train[i],
-                                                 list_of_x_test[i].loc[:, test_feats],
-                                                 list_of_y_test[i])
-        big_stats_dics.append(temp_stats)
-        big_models.append(temp_models)
 
-    return big_stats_dics, big_models
+    predictions = []
+    stats = []
+    models = []
+
+    for i, x in enumerate(list_of_x_train):
+        print(type(x))
+        temp_preds, temp_stats, temp_models = model_analyzer(clfs, grid, plots,
+                                                             thresholds,
+                                                             x.loc[:,feat_list],
+                                                             list_of_y_train[i],
+                                                             list_of_x_test[i].loc[:, feat_list],
+                                                             list_of_y_test[i])
+        predictions.append(temp_preds)
+        models.extend(temp_models)
+        stats.append(temp_stats)
+        
+
+    return predictions, models, stats
         

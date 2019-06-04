@@ -23,13 +23,13 @@ class ClassifierAnalyzer:
     '''
     def __init__(self, model, parameters, name, thresholds, plots, x_train, y_train,
                  x_test, y_test):
+        self.name = name
         self.params = parameters
         self.model = model.set_params(**parameters)
         self.scores = classify(x_train, y_train, x_test, self.model)
         self.truth = y_test
         self.t = thresholds
-        self.predictions_metrics_matrix = self.make_prediction_matrix()
-        self.name = name
+        self.metrics_matrix, self.predictions = self.make_prediction_matrix()
         self.roc_auc = None
 
     def __repr__(self):
@@ -37,20 +37,25 @@ class ClassifierAnalyzer:
 
     def make_prediction_matrix(self):
         rv_dic = {}
+        predictions_df = pd.DataFrame()
         for thresh in self.t:
-            x = 1 - thresh
+            x = round((1 - thresh), 2)
             preds = 'predictions_{}pct'.format(x)
             a = 'precision_{}pct'.format(x)
             b = 'recall_{}pct'.format(x)
             c = 'f1_{}pct'.format(x)
-            rv_dic[preds] = rv_dic.get(preds, predict(self.scores, thresh))
-            prec = precision(self.truth, rv_dic[preds])
-            rec = recall(self.truth, rv_dic[preds])
-            rv_dic[a] = prec
-            rv_dic[b] = rec
-            rv_dic[c] = (prec * rec * 2) / (prec + rec)
+            predictions = predict(self.scores, thresh)
+            predictions = [int(x) for x in predictions]
+            d = '{}_at_{}pct'.format(self.name, x)
+            predictions_df[d] = predictions
+            prec = precision(self.truth, predictions)
+            rec = recall(self.truth, predictions)
+            rv_dic[a] = [prec]
+            rv_dic[b] = [rec]
+            rv_dic[c] = [(prec * rec * 2) / (prec + rec)]
+            rv_dic['model'] = [self.name]
 
-        return pd.DataFrame(rv_dic)
+        return pd.DataFrame(rv_dic), predictions_df
 
     def plot_precision_recall(self, save, show, name):
         precision_curve, recall_curve, pr_thresholds = precision_recall_curve(
