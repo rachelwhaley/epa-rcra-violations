@@ -132,6 +132,7 @@ def temp_holdout(df, date_col, period, holdout):
         tests.append(df[(df[date_col] >= testing_begins) & (df[date_col] <
                                                             (testing_begins +
                                                             period))])
+
         train_ends.append(training_ends)
         test_ends.append((testing_begins + period))
         first += period
@@ -220,7 +221,7 @@ def define_clfs_params(grid_size):
     'BAG': {'n_estimators' : [5], 'max_samples' : [.25] } 
 
            }
-    
+
     if (grid_size == 'large'):
         return clfs, large_grid
     elif (grid_size == 'small'):
