@@ -282,8 +282,8 @@ def type_waste(facilities_df):
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
 
-    naics_df = pd.read_csv('RCRA_NAICS.csv', nrows=100)
-    waste_codes_df = pd.read_csv('Biennial_Report_GM_Waste_Code.csv', nrows=100)
+    naics_df = pd.read_csv('RCRA_NAICS.csv')
+    waste_codes_df = pd.read_csv('Biennial_Report_GM_Waste_Code.csv')
 
     naics_df = pd.merge(\
         naics_df[[ids_naics, naics]],\
