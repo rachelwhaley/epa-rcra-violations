@@ -119,17 +119,21 @@ def temp_holdout(df, date_col, period, holdout):
     holdout = pd.DateOffset(months=holdout)
 
     first = df[date_col].min()
-    train_ends = first + period
+    training_ends = first + period
     testing_begins = train_ends + holdout
     last = df[date_col].max()
     trains = []
     tests = []
+    train_ends = []
+    test_ends = []
 
     while (testing_begins + period) <= last:
-        trains.append(df[(df[date_col] >= first) & (df[date_col] < train_ends)])
+        trains.append(df[(df[date_col] >= first) & (df[date_col] < training_ends)])
         tests.append(df[(df[date_col] >= testing_begins) & (df[date_col] <
                                                             (testing_begins +
                                                             period))])
+        train_ends.append(training_ends)
+        test_ends.append((testing_begins + period))
         first += period
         train_ends += period
         testing_begins += period
@@ -138,7 +142,7 @@ def temp_holdout(df, date_col, period, holdout):
         print('testing_begins: ', tests[-1][date_col].min())
         print('testing_ends: ', tests[-1][date_col].max())
 
-    return trains, tests
+    return trains, tests, train_ends, test_ends
 
 def seperate_ids_feats_ys(periods, id_cols, y_col, feature_columns):
     '''
