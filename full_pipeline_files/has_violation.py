@@ -65,7 +65,7 @@ def flag_lqg(facilities_df):
 def go():
     print("Uploading")
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
-    facilities_df = pd.read_csv('RCRA_FACILITIES.csv', nrows=1000)
+    facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
     print("Uploaded")
     print("creating base df")
     has_vios_df = has_violation(facilities_df, violations_df, 2011, 2018)
