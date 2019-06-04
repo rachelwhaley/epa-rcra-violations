@@ -16,7 +16,7 @@ def create_final(more_info_df, facilities_df):
         .size().reset_index()
     data = {ids: gb[ids], zips: gb[zips], states: gb[states]}
     facilities_with_features_df = pd.DataFrame(data=data)
-    return facilities_with_features_df
+    return facilities_with_features_df, more_info_df
 
 
 def time_late(violations_df, max_date, facilities_df):
@@ -57,7 +57,7 @@ def time_late(violations_df, max_date, facilities_df):
     late = 'late '
     #al = 'ACTIVITY_LOCATION'
 
-    factlities_with_features_df = create_final(violations_df, facilities_df)
+    facilities_with_features_df, violations_df = create_final(violations_df, facilities_df)
 
     violations_df[diff] = violations_df[actual] - violations_df[scheduled]
     violations_df[diff] = violations_df[diff]\
@@ -97,7 +97,7 @@ def time_late(violations_df, max_date, facilities_df):
                     facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
                         .fillna(value=float('Inf'))
 
-    return factlities_with_features_df
+    return facilities_with_features_df
 
 # OLD VERSION OF TIME_LATE
 '''
