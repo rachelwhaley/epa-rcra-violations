@@ -261,40 +261,6 @@ def num_inspections(evals_df, max_date, facilities_df):
     return facilities_with_features_df
     #return
 
-# TODO: check in on this function
-#(From Esther:) The data on this isn't good enough for us to add it
-def corrective_event(date1, date2, df_all_data):
-    """
-    Generates features based on a corrective action event
-    """
-    date = 'Actual Date of Event'
-    event = 'Corrective Action Event Code'
-
-    filt_between = \
-        (df_all_data[date] <= date1) & \
-        (df_all_data[date] >= date2)
-    filt_before = (df_all_data[date] <= date1)
-
-    df_between = df_all_data[filt_between]
-    df_before = df_all_data[filt_before]
-
-    val_unique = df_all_data[event].unique()
-    for val in val_unique:
-        for df in [df_between, df_before]:
-            new_col = str(val)
-            df_all_data[new_col] = df_all_data[events] \
-                .apply(lambda x: 1 if x == val else 0)
-            for group in [zips, states]:
-                to_merge = df_all_data.groupby(group)[new_col].sum() \
-                    .reset_index() \
-                    .rename(columns={new_col: new_col + group})
-                df_all_data = pd.merge(df_all_data, to_merge, on=group, how='left')
-
-    csv_name = 'Corrective_Action_Event.csv'
-    df_ca = pd.read_csv(csv_name, usecols=[0, 5])
-    return df_ca
-
-
 # TODO: confirm which dataframe this is using?
 def type_waste(waste_codes_df, naics_df, facilities_df):
     '''
@@ -495,7 +461,7 @@ def create_outcome_vars(facilities_df):
     return facilities_df
 
 
-def create_all_features(facilities_df, evals_df, violations_df, snc_df):
+def create_all_features(facilities_df, evals_df, violations_df, snc_df, max_date):
     """Takes in dataframes, already trimmed into a training or test set, and returns with features added."""
     """
     Things that are definitely working:
@@ -504,10 +470,7 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
         snc_info
         create_outcome_vars
         num_facilities
-        
-    
     """
-
     facilities_w_violations = create_eval_features(facilities_df, evals_df)
     facilities_lqg = flag_lqg(facilities_w_violations)
     facilities_snc = snc_info(facilities_lqg, snc_df)
@@ -515,16 +478,13 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
     # print(facilities_outcomes.info())
     facilities_nearby_nums = num_facilities(facilities_outcomes)
 
-    max_date = datetime(2000, 1, 1, 0, 0)
-
-
-    # TODO: THESE ARE NOT WORKING
     #(From Esther:) I got this to work on a small set of data
     facilities_w_time_late = time_late(violations_df, max_date, facilities_nearby_nums)
     facilities_w_num_ins_nearby = num_inspections(evals_df, max_date, facilities_nearby_nums)
     facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_num_ins_nearby, on="ID_NUMBER", how="left")
     facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_time_late, on="ID_NUMBER", how="left")
 
+    year = max_date.year
     # ADDING ACS FEATURES
     # read_data('evals')
 
