@@ -4,15 +4,14 @@ has had a violation within the time frame
 '''
 import pandas as pd
 import numpy as np
-
+import datetime
 
 def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     '''
     facilities: list of facilities we want to know whether or not they have had a violation
     start_year: the first year we want to know about
     end_year: the last year we want to know about
-    '''
-    date = 'DATE_VIOLATION_DETERMINED'
+    '''   
     fac_id = 'ID_NUMBER'
     eval_year = 'YEAR_EVALUATED'
     num_copies = end_year - start_year
@@ -33,13 +32,12 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     facs_by_year = pd.DataFrame(data=data)
     # return facs_by_year
 
-    violations_df[['M','D','Y']] = violations_df[date]\
-        .str.split('/', expand=True)
     violations_df[eval_year] = violations_df['Y'].astype(int)
 
 
     violations_df['HasViolation'] = 1
-    facs_by_year = pd.merge(facs_by_year, violations_df[['HasViolation',fac_id, eval_year]], left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
+    facs_by_year = pd.merge(facs_by_year, violations_df[['HasViolation',fac_id, eval_year]],\
+        left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
     facs_by_year['HasViolation'].fillna(0, inplace=True)
 
     # facs_by_year.to_csv("please_work.csv")
@@ -79,15 +77,109 @@ def num_facilities(facilities_df):
 
     return facilities_w_num_nearby
 
+def combine(more_info_df, facilities_df):
+    ids = 'ID_NUMBER'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    # al = 'ACTIVITY_LOCATION'
+    more_info_df = pd.merge(more_info_df, facilities_df[[ids, zips, states]], on=ids,\
+        how='left')
+    gb = more_info_df.groupby([ids, zips, states])\
+        .size().reset_index()
+    data = {ids: gb[ids], zips: gb[zips], states: gb[states]}
+    facilities_with_features_df = pd.DataFrame(data=data)
+    return facilities_with_features_df, more_info_df
+
+def time_late_early(violations_df, max_date, facilities_df):
+    '''
+    Calculates:
+        Number of times early/late
+        Average time early/late
+        Total time early/late
+        Number of days since early/late
+
+        for a sinlg location
+        for all locations in a zip/state
+
+        within date ranges (date2 before date1)
+        before date1
+
+    '''
+    ids = 'ID_NUMBER'
+    actual = 'ACTUAL_RTC_DATE'
+    scheduled = 'SCHEDULED_COMPLIANCE_DATE'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    diff = 'difference'
+    early = 'early '
+    late = 'late '
+
+    facilities_with_features_df, violations_df = combine(violations_df, facilities_df)
+
+    for col in [actual, scheduled]:
+        violations_df[col] = pd.to_datetime(violations_df[col])
+
+    violations_df[diff] = violations_df[actual] - violations_df[scheduled]
+    violations_df[diff] = violations_df[diff]\
+        .apply(lambda x: x.days)
+    violations_df[early] = violations_df[diff]\
+        .apply(lambda x: 0 if x >= 0 else 1)
+    violations_df[late] = violations_df[diff]\
+        .apply(lambda x: 0 if x <= 0 else 1)
+
+    for col in [early, late]:
+        filt = (violations_df[col] == 1)
+        our_db = violations_df[filt]
+        #for group in [ids, al]:
+        for group in [ids, zips, states]:
+            label = col + " " + group
+            avg = our_db.groupby(group)\
+                [diff].mean().reset_index().rename(\
+                columns={diff:label+" avg"})
+            sums = our_db.groupby(group)\
+                [diff].sum().reset_index().rename(\
+                columns={diff:label+" sum"})
+            count = our_db.groupby(group)\
+                [col].sum().reset_index().rename(\
+                columns={col:label+" count"})
+            last = our_db.groupby(group)\
+                [actual].max()\
+                .apply(lambda x: (max_date - x).days)\
+                .reset_index().rename(\
+                columns={actual:"last " + label})
+            for gb_bool in [(avg, False), (sums, False), (count, False),\
+                (last, True)]:
+                gb, bool_val = gb_bool
+                facilities_with_features_df = pd.merge(facilities_with_features_df, gb,\
+                    on=group, how='left')
+                if bool_val:
+                    to_fill = "last " + label
+                    facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
+                        .fillna(value=float('Inf'))
+
+    return facilities_with_features_df.drop(columns=[zips,states])
+
 def go():
     ids = 'ID_NUMBER'
+    date = 'DATE_VIOLATION_DETERMINED'
+
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
+    
+    violations_df[['M','D','Y']] = violations_df[date]\
+        .str.split('/', expand=True)
+
     has_vios_df, years = has_violation(facilities_df, violations_df)
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[[ids, "IsLQG", "IsTSDF"]], on=ids, how="left")
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
+    for y in years:
+        filt = violations_df['Y'] == y
+        vio_filt = violations_df[filt]
+        max_date = datetime.datetime(y, 12, 31, 23, 59)
+        vio_filt = time_late_early(vio_filt, max_date, facilities_df)
+        has_vios_df = pd.merge(has_vios_df, vio_filt, on=ids, how="left")
 
 
     return has_vios_df
