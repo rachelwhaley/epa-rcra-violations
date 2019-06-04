@@ -100,7 +100,7 @@ def time_late(violations_df, max_date, facilities_df):
                     facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
                         .fillna(value=float('Inf'))
 
-    return facilities_with_features_df
+    return facilities_with_features_df.drop(columns=[zips,states])
 
 # OLD VERSION OF TIME_LATE
 '''
@@ -258,11 +258,11 @@ def num_inspections(evals_df, max_date, facilities_df):
                     .fillna(value=float('Inf'))
     
 
-    return facilities_with_features_df
+    return facilities_with_features_df.drop(columns=[zips, states])
     #return
 
 # TODO: confirm which dataframe this is using?
-def type_waste(waste_codes_df, naics_df, facilities_df):
+def type_waste(facilities_df):
     '''
     !!!DONE!!!
 
@@ -284,6 +284,9 @@ def type_waste(waste_codes_df, naics_df, facilities_df):
     naics = 'NAICS_CODE'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
+
+    naics_df = pd.read_csv('RCRA_NAICS.csv')
+    waste_codes_df = pd.read_csv('Biennial_Report_GM_Waste_Code.csv')
 
     naics_df = pd.merge(\
         naics_df[[ids_naics, naics]],\
@@ -310,7 +313,7 @@ def type_waste(waste_codes_df, naics_df, facilities_df):
                 facilities_with_features_df = pd.merge(facilities_with_features_df, to_merge,\
                     on=group,how='left')
         
-    return facilities_with_features_df
+    return facilities_with_features_df.drop(columns=[waste_codes, code_owner, zips, naics, states, ids_waste])
 
 def num_facilities(facilities_df):
     """
@@ -483,6 +486,9 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df, max_date
     facilities_w_num_ins_nearby = num_inspections(evals_df, max_date, facilities_nearby_nums)
     facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_num_ins_nearby, on="ID_NUMBER", how="left")
     facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_time_late, on="ID_NUMBER", how="left")
+
+    facs_w_waste_naics = type_waste(facilities_nearby_nums)
+    facilities_nearby_nums = pd.merge(facilities_nearby_nums, facs_w_waste_naics, on="ID_NUMBER", how="left")
 
     year = max_date.year
     # ADDING ACS FEATURES
