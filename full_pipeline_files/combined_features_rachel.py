@@ -262,6 +262,7 @@ def num_inspections(evals_df, max_date, facilities_df):
     #return
 
 # TODO: check in on this function
+#(From Esther:) The data on this isn't good enough for us to add it
 def corrective_event(date1, date2, df_all_data):
     """
     Generates features based on a corrective action event
@@ -295,8 +296,8 @@ def corrective_event(date1, date2, df_all_data):
 
 
 # TODO: confirm which dataframe this is using?
-def type_waste(df_all_data):
-    """
+def type_waste(waste_codes_df, naics_df, facilities_df):
+    '''
     !!!DONE!!!
 
     calculates:
@@ -306,31 +307,44 @@ def type_waste(df_all_data):
             in a zip/state
 
     Generates features based on the type of waste created
-    """
-    # csv_name = 'Biennial_Report_GM_Waste_Code.csv'
-    # df_wc = pd.read_csv(csv_name, header=[0,6])
-    # I'm assuming the the three below columns will all be merged into the db
+    '''
+    #csv_name = 'Biennial_Report_GM_Waste_Code.csv'
+    #df_wc = pd.read_csv(csv_name, header=[0,6])
+    #I'm assuming the the three below columns will all be merged into the db
+    ids_waste = 'EPA Handler ID'
+    ids_naics = 'ID_NUMBER'
     waste_codes = 'Hazardous Waste Code'
     code_owner = 'Hazardous Waste Code Owner'
     naics = 'NAICS_CODE'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
 
+    naics_df = pd.merge(\
+        naics_df[[ids_naics, naics]],\
+        facilities_df[[ids_naics, zips, states]],
+        on=ids_naics, how='left')
+
+    facilities_with_features_df = pd.merge(\
+        naics_df[[ids_naics, naics, zips, states]],\
+        waste_codes_df[[ids_waste, waste_codes, code_owner]],\
+        left_on=ids_naics, right_on=ids_waste,\
+        how='left')
+
     for col in [waste_codes, code_owner, naics]:
-        ser = df_all_data[col]
+        ser = facilities_with_features_df[col]
         val_unique = ser.unique()
         for val in val_unique:
             new_col = col + str(val)
-            df_all_data[new_col] = df_all_data[waste_codes] \
+            facilities_with_features_df[new_col] = facilities_with_features_df[waste_codes]\
                 .apply(lambda x: 1 if x == val else 0)
             for group in [zips, states]:
-                to_merge = df_all_data.groupby(group)[new_col].sum() \
-                    .reset_index() \
-                    .rename(columns={new_col: new_col + group})
-                df_all_data = pd.merge(df_all_data, to_merge, on=group, how='left')
-
-    return df_all_data
-
+                to_merge = facilities_with_features_df.groupby(group)[new_col].sum()\
+                    .reset_index()\
+                    .rename(columns={new_col:new_col+group})
+                facilities_with_features_df = pd.merge(facilities_with_features_df, to_merge,\
+                    on=group,how='left')
+        
+    return facilities_with_features_df
 
 def num_facilities(facilities_df):
     """
