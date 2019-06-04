@@ -72,9 +72,9 @@ class ClassifierAnalyzer:
 
         plt.clf()
         fig, ax1 = plt.subplots()
-        ax1.plot(pct_above_per_thresh, precision_curve, 'b')
+        ax1.plot(pct_above_per_thresh, precision_curve, 'g')
         ax1.set_xlabel('percent of population')
-        ax1.set_ylabel('precision', color='b')
+        ax1.set_ylabel('precision', color='g')
         ax2 = ax1.twinx()
         ax2.plot(pct_above_per_thresh, recall_curve, 'r')
         ax2.set_ylabel('recall', color='r')
@@ -83,27 +83,30 @@ class ClassifierAnalyzer:
 
         plt.title(name)
         if save == True:
-            plt.savefig(name)
+            plt.savefig('plots/' + name + '.png')
+            plt.close()
         if show == True:
             plt.show()
+            plt.close()
 
     def plot_roc(self, save, show, name):
         fpr, tpr, thresholds = roc_curve(self.truth, self.scores)
-        roc_auc = auc(fpr, tpr)
+        self.roc_auc = auc(fpr, tpr)
         plt.clf()
-        plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.xlim([0.0, 1.05])
-        plt.ylim([0.0, 1.05])
+        plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % self.roc_auc)
+        plt.plot([0, 1], [0, 1], 'r--')
+        plt.xlim([0.0, 1])
+        plt.ylim([0.0, 1])
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
         plt.title(name)
         plt.legend(loc="lower right")
         if save == True:
-            plt.savefig(name)
+            plt.savefig('plots/' + name + '.png')
+            plt.close()
         if show == True:
             plt.show()
-
+            plt.close()
 def classify(x_train, y_train, x_test, classifier):
     '''
     from rachel's pipeline_library
@@ -123,7 +126,7 @@ def compare_to_threshold(score, threshold):
     that represents threshold% of population, then compares each score to that
     adjusted threshold CORRECTED TO PREDICT 1 FOR THRESHOLD% CORRECTLY
     '''
-    if score > (1 - threshold):
+    if score > threshold:
         return 1
     else:
         return 0

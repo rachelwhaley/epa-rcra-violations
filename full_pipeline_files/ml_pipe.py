@@ -194,7 +194,7 @@ def define_clfs_params(grid_size):
     
     small_grid = { 
     'RF':{'n_estimators': [10,100], 'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
-    'LR': { 'penalty': ['l1','l2'], 'C': [0.001,0.1,1], 'solver': ['liblinear']},
+    'LR': { 'penalty': ['l1','l2'], 'C': [0.1,1,10], 'solver': ['liblinear']},
     'SGD': { 'loss': ['log','perceptron'], 'penalty': ['l2','l1'], 'max_iter':[1000], 'tol':[1]},
     'ET': { 'n_estimators': [10,100], 'criterion' : ['gini', 'entropy'] ,'max_depth': [5], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
     'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [10,100,500]},
@@ -260,6 +260,7 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                 pd.concat([stats_df, m.metrics_matrix], axis=0)
                 models.append(m)
                 if plots == 'show':
+                    print(m.name)
                     m.plot_precision_recall(False, True, None)
                     m.plot_roc(False, True, None)
                 elif plots == 'save':
@@ -291,7 +292,6 @@ def model_analyzer_over_time(clfs, grid, plots, thresholds, list_of_x_train,
     models = []
 
     for i, x in enumerate(list_of_x_train):
-        print(type(x))
         temp_preds, temp_stats, temp_models = model_analyzer(clfs, grid, plots,
                                                              thresholds,
                                                              x.loc[:,feat_list],
