@@ -182,7 +182,7 @@ def define_clfs_params(grid_size):
     large_grid = { 
     'RF':{'n_estimators': [1,10,100,1000,10000], 'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'n_jobs': [-1]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10], 'solver': ['liblinear']},
-    'SGD': { 'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
+    'SGD': { 'loss': ['hinge','log'], 'penalty': ['l2','l1','elasticnet']},
     'ET': { 'n_estimators': [1,10,100,1000,10000], 'criterion' : ['gini', 'entropy'] ,'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'n_jobs': [-1]},
     'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000]},
     'GB': {'n_estimators': [1,10,100,1000,10000], 'learning_rate' : [0.01,0.1,0.5],'subsample' : [0.1,0.5,1.0], 'max_depth': [1,3,5,10,20,50,100]},
@@ -196,7 +196,7 @@ def define_clfs_params(grid_size):
     small_grid = { 
     'RF':{'n_estimators': [10,100], 'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.1,1,10], 'solver': ['liblinear']},
-    'SGD': { 'loss': ['log','perceptron'], 'penalty': ['l2','l1'], 'max_iter':[1000], 'tol':[1]},
+    'SGD': { 'loss': ['log'], 'penalty': ['l2','l1'], 'max_iter':[1000], 'tol':[1]},
     'ET': { 'n_estimators': [10,100], 'criterion' : ['gini', 'entropy'] ,'max_depth': [5], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
     'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [10,100,500]},
     'GB': {'n_estimators': [10,100], 'learning_rate' : [0.5],'subsample' : [0.5,1.0], 'max_depth': [5]},
@@ -210,7 +210,7 @@ def define_clfs_params(grid_size):
     test_grid = { 
     'RF':{'n_estimators': [1], 'max_depth': [1], 'max_features': ['sqrt'],'min_samples_split': [10]},
     'LR': { 'penalty': ['l2'], 'C': [0.01]},
-    'SGD': { 'loss': ['perceptron'], 'penalty': ['l2']},
+    'SGD': { 'loss': ['log'], 'penalty': ['l2']},
     'ET': { 'n_estimators': [1], 'criterion' : ['gini'] ,'max_depth': [1], 'max_features': ['sqrt'],'min_samples_split': [10]},
     'AB': { 'algorithm': ['SAMME'], 'n_estimators': [1]},
     'GB': {'n_estimators': [1], 'learning_rate' : [0.1],'subsample' : [0.5], 'max_depth': [1]},
@@ -280,8 +280,7 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
     return predictions, stats_df, models
 
 def model_analyzer_over_time(clfs, grid, plots, thresholds, list_of_x_train,
-                             list_of_y_train, list_of_x_test, list_of_y_test,
-                             feat_list):
+                             list_of_y_train, list_of_x_test, list_of_y_test):
     '''
     iterate through a list of x train dataframes and make an aggregate list of
     stats dics and models for each model in each timeframe. this list will be
@@ -294,10 +293,9 @@ def model_analyzer_over_time(clfs, grid, plots, thresholds, list_of_x_train,
 
     for i, x in enumerate(list_of_x_train):
         temp_preds, temp_stats, temp_models = model_analyzer(clfs, grid, plots,
-                                                             thresholds,
-                                                             x.loc[:,feat_list],
+                                                             thresholds, x,
                                                              list_of_y_train[i],
-                                                             list_of_x_test[i].loc[:, feat_list],
+                                                             list_of_x_test[i],
                                                              list_of_y_test[i])
         predictions.append(temp_preds)
         models.extend(temp_models)

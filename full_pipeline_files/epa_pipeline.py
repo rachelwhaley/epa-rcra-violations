@@ -63,7 +63,7 @@ def generate_features(trains, tests, train_ends, test_ends, facs_df):
 
     return trains, tests
 
-def run_models(grid_size, plots, list_of_trainx, list_of_trainy,
+def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
                list_of_testx, list_of_testy):
     '''
     takes features and y data for all train and test periods and fits/runs all
@@ -72,13 +72,12 @@ def run_models(grid_size, plots, list_of_trainx, list_of_trainy,
     clfs, grid = ml.define_clfs_params(grid_size)
 
     predictions, models, metrics = ml.model_analyzer_over_time(clfs, grid,
-                                                               'show', 
+                                                               plots, 
                                                                thresholds,
-                                                               list_of_x_train,
-                                                               list_of_y_train,
-                                                               list_of_x_test,
-                                                               list_of_y_test,
-                                                               feat_list)
+                                                               list_of_trainx,
+                                                               list_of_trainy,
+                                                               list_of_testx,
+                                                               list_of_testy)
 
     return predictions, models, metrics
 
