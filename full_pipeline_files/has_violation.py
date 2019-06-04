@@ -43,8 +43,7 @@ def has_violation(facilities_df, violations_df, start_year, end_year):
     facs_by_year = pd.merge(facs_by_year, violation_df[['HasViolation',fac_id, eval_year]], left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
     facs_by_year['HasViolation'].fillna(0, inplace=True)
 
-
-    facs_by_year.to_csv("please_work.csv")
+    # facs_by_year.to_csv("please_work.csv")
 
     print(facs_by_year["HasViolation"].describe())
 
@@ -68,14 +67,13 @@ if __name__ == "__main__":
     violation_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
     has_vios_df = has_violation(facilities_df, violation_df, 2011, 2013)
-
-
     with_lqgs = flag_lqg(facilities_df)
-
     has_vios_df = pd.merge(has_vios_df, with_lqgs[['ID_NUMBER', "IsLQG", "IsTSDF"]], on="ID_NUMBER", how="left")
 
     print(has_vios_df["IsLQG"].describe())
     print(has_vios_df['IsTSDF'].describe())
+
+    has_vios_df.to_csv("has_vios.csv")
 
     print(has_vios_df.head())
 
