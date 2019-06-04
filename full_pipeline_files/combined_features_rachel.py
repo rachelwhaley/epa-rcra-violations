@@ -470,19 +470,24 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df, max_date
         create_outcome_vars
         num_facilities
     """
+    print("create_eval_features")
     facilities_w_violations = create_eval_features(facilities_df, evals_df)
+    print("flag_lqg")
     facilities_lqg = flag_lqg(facilities_w_violations)
+    print("snc_info")
     facilities_snc = snc_info(facilities_lqg, snc_df)
+    print("create_outcome_vars")
     facilities_outcomes = create_outcome_vars(facilities_snc)
     # print(facilities_outcomes.info())
+    print("num_facilities")
     facilities_nearby_nums = num_facilities(facilities_outcomes)
-
-    #(From Esther:) I got this to work on a small set of data
+    print("time_late")
     facilities_w_time_late = time_late(violations_df, max_date, facilities_nearby_nums)
+    print("num_inspections")
     facilities_w_num_ins_nearby = num_inspections(evals_df, max_date, facilities_nearby_nums)
     facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_num_ins_nearby, on="ID_NUMBER", how="left")
     facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_time_late, on="ID_NUMBER", how="left")
-
+    print("type_waste")
     facs_w_waste_naics = type_waste(facilities_nearby_nums)
     facilities_nearby_nums = pd.merge(facilities_nearby_nums, facs_w_waste_naics, on="ID_NUMBER", how="left")
 
