@@ -313,7 +313,7 @@ def type_waste(facilities_df):
                 facilities_with_features_df = pd.merge(facilities_with_features_df, to_merge,\
                     on=group,how='left')
         
-    return facilities_with_features_df.drop(columns=[waste_codes, code_owner, zips])
+    return facilities_with_features_df.drop(columns=[waste_codes, code_owner, zips, naics, states, ids_waste])
 
 def num_facilities(facilities_df):
     """
