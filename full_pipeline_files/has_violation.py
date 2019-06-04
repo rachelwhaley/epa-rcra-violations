@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 
-def has_violation(facilities_df, violations_df, start_year, end_year):
+def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     '''
     facilities: list of facilities we want to know whether or not they have had a violation
     start_year: the first year we want to know about
@@ -45,7 +45,7 @@ def has_violation(facilities_df, violations_df, start_year, end_year):
     # facs_by_year.to_csv("please_work.csv")
 
 
-    return facs_by_year
+    return facs_by_year, years
 
 
 def flag_lqg(facilities_df):
@@ -61,8 +61,6 @@ def flag_lqg(facilities_df):
 
 def num_facilities(facilities_df):
     """
-    !!!DONE!!!
-
     Calculates:
         Number of facilities in a zip code and state
     """
@@ -85,7 +83,7 @@ def go():
     ids = 'ID_NUMBER'
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
-    has_vios_df = has_violation(facilities_df, violations_df, 2011, 2018)
+    has_vios_df, years = has_violation(facilities_df, violations_df)
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[[ids, "IsLQG", "IsTSDF"]], on=ids, how="left")
     num_facs = num_facilities(facilities_df)
