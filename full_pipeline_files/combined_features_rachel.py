@@ -59,6 +59,9 @@ def time_late(violations_df, max_date, facilities_df):
 
     facilities_with_features_df, violations_df = create_final(violations_df, facilities_df)
 
+    for col in [actual, scheduled]:
+        violations_df[col] = pd.to_datetime(violations_df[col])
+
     violations_df[diff] = violations_df[actual] - violations_df[scheduled]
     violations_df[diff] = violations_df[diff]\
         .apply(lambda x: x.days)
@@ -202,6 +205,7 @@ def num_inspections(evals_df, max_date, facilities_df):
     states = 'STATE_CODE'
     al = 'ACTIVITY_LOCATION'
 
+    '''
     facilities_crop = facilities_df[[ids, states, zips]].groupby([ids, states, zips]).size().reset_index()
     print(facilities_crop.head())
     print(evals_df.head())
@@ -210,16 +214,17 @@ def num_inspections(evals_df, max_date, facilities_df):
     print(evals_df.head())
 
     # if there haven't been any inspections, will set to the max # of possible days in dataset
-    evals_df[date] = pd.to_datetime(evals_df[date])
+    
     max_val_for_na = (evals_df[date].max() - evals_df[date].min()).days
     print("DEBUGGING NUM INSPECTS")
     # print(max_val_for_na)
+    '''
 
     # find the number of evals by state
-    sums_state = evals_df.groupby(states).size().reset_index().rename(columns={0: "NumEvalsInMyState"}).fillna(value=0)
-    print(sums_state.head())
+    #sums_state = evals_df.groupby(states).size().reset_index().rename(columns={0: "NumEvalsInMyState"}).fillna(value=0)
+    #print(sums_state.head())
 
-    facilities_result = pd.merge(facilities_df, sums_state, on=states, how='left')
+    #facilities_result = pd.merge(facilities_df, sums_state, on=states, how='left')
 
     # sums_zip = evals_df.groupby(zips).size().reset_index().rename(columns={0: "NumEvalsInMyZIP"}).fillna(value=0)
     # facilities_result = pd.merge(facilities_result, sums_zip, on=zips, how='left')
@@ -228,11 +233,12 @@ def num_inspections(evals_df, max_date, facilities_df):
     # facilities_result = pd.merge(facilities_result, latest_eval_state, on=states, how='left')
 
 
-    print(facilities_result.info())
-    facilities_result.head().to_csv("debugging_numins.csv")
+    #print(facilities_result.info())
+    #facilities_result.head().to_csv("debugging_numins.csv")
 
-
-    """
+    facilities_with_features_df, evals_df = create_final(evals_df, facilities_df)
+    evals_df[date] = pd.to_datetime(evals_df[date])
+    
     # for group in [ids, al]:
     for group in [ids, zips, states]:
         sums = evals_df.groupby(group) \
@@ -243,15 +249,17 @@ def num_inspections(evals_df, max_date, facilities_df):
             .reset_index().rename(columns={date: group + " last"})
         for gb_bool in [(sums, False), (last, True)]:
             gb, bool_val = gb_bool
-            facilities_df = pd.merge(facilities_df, gb, on=group, how='left')
+            facilities_with_features_df = \
+                pd.merge(facilities_with_features_df, gb, on=group, how='left')\
+                .rename(columns={0: "eval_sum_" + group})
             if bool_val:
                 to_fill = group + " last"
-                facilities_df[to_fill] = facilities_df[to_fill] \
+                facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill] \
                     .fillna(value=float('Inf'))
-    """
+    
 
-    # return facilities_df.rename(columns={'0_x': "eval_sum_zips", '0_y': "eval_sum_states"})
-    return
+    return facilities_with_features_df
+    #return
 
 # TODO: check in on this function
 def corrective_event(date1, date2, df_all_data):
@@ -497,7 +505,8 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
 
 
     # TODO: THESE ARE NOT WORKING
-    # facilities_w_time_late = time_late(violations_df, max_date, facilities_nearby_nums)
+    #(From Esther:) I got this to work on a small set of violations
+    facilities_w_time_late = time_late(violations_df, max_date, facilities_nearby_nums)
     # facilities_w_num_ins_nearby = num_inspections(evals_df, max_date, facilities_nearby_nums)
     # facilities_nearby_nums = pd.merge(facilities_nearby_nums, facilities_w_num_ins_nearby, on="ID_NUMBER", how="left")
 
