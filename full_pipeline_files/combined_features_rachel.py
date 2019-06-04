@@ -337,8 +337,12 @@ def num_facilities(facilities_df):
     sums_state = facilities_df.groupby(states).size().reset_index().rename(columns={0: "NumInMyState"})
     facilities_w_num_nearby = pd.merge(facilities_df, sums_state, on=states, how='left')
 
+    # fill na values with zero
+    facilities_w_num_nearby["NumInMyState"].fillna(0, inplace=True)
+
     sums_zip = facilities_w_num_nearby.groupby(zips).size().reset_index().rename(columns={0: "NumInMyZIP"})
     facilities_w_num_nearby = pd.merge(facilities_w_num_nearby, sums_zip, on=zips, how='left')
+    facilities_w_num_nearby["NumInMyZIP"].fillna(0, inplace=True)
 
     return facilities_w_num_nearby
 
