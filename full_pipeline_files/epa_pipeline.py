@@ -71,9 +71,17 @@ def run_models(grid_size, plots, list_of_trainx, list_of_trainy,
     '''
     clfs, grid = ml.define_clfs_params(grid_size)
 
-    stats_dic, models = ml.model_analyzer_over_time(clfs, grid, plots, thresholds,
-                                 list_of_x_train, list_of_y_train, list_of_x_test,
-                                 list_of_y_test, feat_list)
+    predictions, models, metrics = ml.model_analyzer_over_time(clfs, grid,
+                                                               'show', 
+                                                               thresholds,
+                                                               list_of_x_train,
+                                                               list_of_y_train,
+                                                               list_of_x_test,
+                                                               list_of_y_test,
+                                                               feat_list)
+
+    return predictions, models, metrics
+    
 
         
 def main():
