@@ -20,9 +20,6 @@ def create_final(more_info_df, facilities_df):
 
 
 def time_late(violations_df, max_date, facilities_df):
-
-    print("PASSING INTO TIME LATE")
-    print(facilities_df.info())
     '''
     Inputs:
         violations_df: a dataframe with all violations information
@@ -285,8 +282,8 @@ def type_waste(facilities_df):
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
 
-    naics_df = pd.read_csv('RCRA_NAICS.csv')
-    waste_codes_df = pd.read_csv('Biennial_Report_GM_Waste_Code.csv')
+    naics_df = pd.read_csv('RCRA_NAICS.csv', nrows=100)
+    waste_codes_df = pd.read_csv('Biennial_Report_GM_Waste_Code.csv', nrows=100)
 
     naics_df = pd.merge(\
         naics_df[[ids_naics, naics]],\
@@ -445,8 +442,7 @@ def snc_info(facilities_df, snc_df):
 
     # Drop the date columns before returning df
     facilities_df = facilities_df.drop(['MostRecentSNC_Y', 'MostRecentSNC_N'], axis=1)
-    print("FINAL INFO FROM snc_info")
-    print(facilities_df.info())
+
 
     return facilities_df
 
@@ -500,7 +496,6 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df, max_date
     # print(facilities_nearby_nums.info())
     # return facilities_nearby_nums
 
-    print(facilities_nearby_nums.info())
     return facilities_nearby_nums
 
 
