@@ -37,15 +37,12 @@ def has_violation(facilities_df, violations_df, start_year, end_year):
         .str.split('/', expand=True)
     violations_df[eval_year] = violations_df['Y'].astype(int)
 
-    print(facs_by_year.head())
 
     violations_df['HasViolation'] = 1
     facs_by_year = pd.merge(facs_by_year, violations_df[['HasViolation',fac_id, eval_year]], left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
     facs_by_year['HasViolation'].fillna(0, inplace=True)
 
     # facs_by_year.to_csv("please_work.csv")
-
-    print(facs_by_year["HasViolation"].describe())
 
 
     return facs_by_year
@@ -62,23 +59,38 @@ def flag_lqg(facilities_df):
 
     return facilities_df
 
+def num_facilities(facilities_df):
+    """
+    !!!DONE!!!
+
+    Calculates:
+        Number of facilities in a zip code and state
+    """
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+
+    sums_state = facilities_df.groupby(states).size().reset_index().rename(columns={0: "NumInMyState"})
+    facilities_w_num_nearby = pd.merge(facilities_df, sums_state, on=states, how='left')
+
+    # fill na values with zero
+    facilities_w_num_nearby["NumInMyState"].fillna(0, inplace=True)
+
+    sums_zip = facilities_w_num_nearby.groupby(zips).size().reset_index().rename(columns={0: "NumInMyZIP"})
+    facilities_w_num_nearby = pd.merge(facilities_w_num_nearby, sums_zip, on=zips, how='left')
+    facilities_w_num_nearby["NumInMyZIP"].fillna(0, inplace=True)
+
+    return facilities_w_num_nearby
+
 def go():
-    print("Uploading")
+    ids = 'ID_NUMBER'
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
-    print("Uploaded")
-    print("creating base df")
     has_vios_df = has_violation(facilities_df, violations_df, 2011, 2018)
-    print("with lqgs")
     with_lqgs = flag_lqg(facilities_df)
-    has_vios_df = pd.merge(has_vios_df, with_lqgs[['ID_NUMBER', "IsLQG", "IsTSDF"]], on="ID_NUMBER", how="left")
+    has_vios_df = pd.merge(has_vios_df, with_lqgs[[ids, "IsLQG", "IsTSDF"]], on=ids, how="left")
+    num_facs = num_facilities(facilities_df)
+    has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
 
-    print(has_vios_df["IsLQG"].describe())
-    print(has_vios_df['IsTSDF'].describe())
-
-    #has_vios_df.to_csv("has_vios.csv")
-
-    print(has_vios_df.head())
 
     return has_vios_df
 
