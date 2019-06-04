@@ -337,8 +337,12 @@ def num_facilities(facilities_df):
     sums_state = facilities_df.groupby(states).size().reset_index().rename(columns={0: "NumInMyState"})
     facilities_w_num_nearby = pd.merge(facilities_df, sums_state, on=states, how='left')
 
+    # fill na values with zero
+    facilities_w_num_nearby["NumInMyState"].fillna(0, inplace=True)
+
     sums_zip = facilities_w_num_nearby.groupby(zips).size().reset_index().rename(columns={0: "NumInMyZIP"})
     facilities_w_num_nearby = pd.merge(facilities_w_num_nearby, sums_zip, on=zips, how='left')
+    facilities_w_num_nearby["NumInMyZIP"].fillna(0, inplace=True)
 
     return facilities_w_num_nearby
 
@@ -351,6 +355,9 @@ def create_eval_features(facilities_df, evals_df):
     # facilities_w_counts = pd.merge(evals_counts, facilities_df, left_on='ID_NUMBER', right_on='ID_NUMBER', how='left')
     facilities_w_counts = pd.merge(facilities_df, evals_counts, left_on='ID_NUMBER', right_on='ID_NUMBER', how='outer')
 
+    # fill na values of EvalCounts with zero, since that means no evaluations in the data
+    facilities_w_counts["EvalCount"].fillna(0, inplace=True)
+
     evals_df["FOUND_VIOLATION_01"] = pd.Series(np.where(evals_df.FOUND_VIOLATION.str.contains("Y"), 1, 0),
                                                evals_df.index)
 
@@ -360,8 +367,14 @@ def create_eval_features(facilities_df, evals_df):
     facilities_w_violations = pd.merge(facilities_w_counts, violation_sums, left_on='ID_NUMBER', right_on='ID_NUMBER',
                                        how='left')
 
+    # fill na values of Sum_Violations with zero, since that means no violations in the data
+    facilities_w_violations['Sum_Violations'].fillna(0, inplace=True)
+
     facilities_w_violations["PCT_EVALS_FOUND_VIOLATION"] = facilities_w_violations["Sum_Violations"] / \
                                                            facilities_w_violations["EvalCount"]
+
+    # fill na values of PCT_EVALS_FOUND_VIOLATION with zero, since that means no evals
+    facilities_w_violations["PCT_EVALS_FOUND_VIOLATION"].fillna(0, inplace=True)
 
     facilities_w_violations["PCT_OF_ALL_EVALS"] = facilities_w_violations["EvalCount"] / facilities_w_violations[
         "EvalCount"].sum()
@@ -381,6 +394,17 @@ def create_eval_features(facilities_df, evals_df):
     facilities_w_violations["NumMonthsSinceEval"] = (datetime.today() - facilities_w_violations["MostRecentEval"]) / (
         np.timedelta64(1, 'M'))
 
+    evals_df["date_version"] = pd.to_datetime(evals_df["EVALUATION_START_DATE"], format='%m/%d/%Y',
+                                                        errors='coerce')
+
+    max_poss_months = ((datetime.today() - (evals_df["date_version"].min())) / (np.timedelta64(1, 'M')))
+
+    # fill the na values with the maximum possible number of months since evaluation
+    facilities_w_violations["NumMonthsSinceEval"].fillna(max_poss_months, inplace=True)
+
+    # drop the date column before you return
+    facilities_w_violations = facilities_w_violations.drop(['MostRecentEval'], axis=1)
+
     return facilities_w_violations
 
 
@@ -399,23 +423,19 @@ def flag_lqg(facilities_df):
 def snc_info(facilities_df, snc_df):
     """Adds columns for info about SNC status."""
     # TODO: Need to add ANY SNC in time period
-    snc_df["SNC_Y"] = pd.Series(np.where(snc_df.SNC_FLAG.str.contains("Y"), 1, 0), snc_df.index)
-
+    snc_df["SNC_Y"] = np.where(snc_df.SNC_FLAG.str.contains("Y"), 1, 0)
     snc_df["SNC_N"] = pd.Series(np.where(snc_df.SNC_FLAG.str.contains("N"), 1, 0), snc_df.index)
-    # print(snc_df.head())
 
-    # gapminder['year']==2002
     snc_y = snc_df[snc_df['SNC_Y'] == 1]
     snc_n = snc_df[snc_df['SNC_N'] == 1]
-    # print(snc_y.info())
-
-    # snc_n = snc_df.SNC_FLAG.str.contains("N")
 
     snc_count = snc_y.groupby("ID_NUMBER").size().reset_index().rename(columns={
         0: 'SNC_Count'}).sort_values("SNC_Count", ascending=False)
 
     facilities_df = pd.merge(facilities_df, snc_count, on="ID_NUMBER", how="left")
+    facilities_df["SNC_Count"].fillna(0, inplace=True)
 
+    # Find the most recent dates the facility was designated an SNC, Y or N
     max_date_y = snc_y.groupby("ID_NUMBER").agg({'YRMONTH': max})[
         ['YRMONTH']].reset_index().rename(columns={'YRMONTH': 'MostRecentSNC_Y'})
 
@@ -425,19 +445,17 @@ def snc_info(facilities_df, snc_df):
     facilities_df = pd.merge(facilities_df, max_date_y, on='ID_NUMBER', how='left')
     facilities_df = pd.merge(facilities_df, max_date_n, on='ID_NUMBER', how='left')
 
-    print("DEBUG1")
-    # print(facilities_df['MostRecentSNC_Y'])
     facilities_df["MostRecentSNC_Y"] = pd.to_datetime(facilities_df["MostRecentSNC_Y"],
                                                                format='%Y%m', errors='coerce')
     facilities_df["MostRecentSNC_N"] = pd.to_datetime(facilities_df["MostRecentSNC_N"],
                                                    format='%Y%m', errors='coerce')
 
-    # facilities_df["More_Recent_SNC_Yes"] = facilities_df["MostRecentSNC_Y"] > facilities_df["MostRecentSNC_N"]
-    facilities_df["More_Recent_SNC_Yes"] = np.where((facilities_df['MostRecentSNC_Y'] >= facilities_df['MostRecentSNC_N']), True, False)
+    facilities_df["More_Recent_SNC_Yes"] = np.where((facilities_df['MostRecentSNC_Y'] >= facilities_df['MostRecentSNC_N']), 1, 0)
 
-    # print(facilities_df.info())
-    # print("PRINTING MORE RECENT SNC YES DEBUG")
-    # print(facilities_df['MostRecentSNC_Y'])
+    # Drop the date columns before returning df
+    facilities_df = facilities_df.drop(['MostRecentSNC_Y', 'MostRecentSNC_N'], axis=1)
+    print("FINAL INFO FROM snc_info")
+    print(facilities_df.info())
 
     return facilities_df
 
@@ -450,7 +468,7 @@ def create_outcome_vars(facilities_df):
     facilities_df["HadAnySNC"] = pd.Series(np.where(np.equal(facilities_df.SNC_Count, 0), 0, 1), \
                                               facilities_df.index)
 
-    facilities_df["Currently_SNC"] = pd.Series(np.where(np.equal(facilities_df.More_Recent_SNC_Yes, True), 1, 0), \
+    facilities_df["Currently_SNC"] = pd.Series(np.where(np.equal(facilities_df.More_Recent_SNC_Yes, 1), 1, 0), \
                                        facilities_df.index)
     return facilities_df
 
@@ -494,6 +512,7 @@ def create_all_features(facilities_df, evals_df, violations_df, snc_df):
 
     print(facilities_nearby_nums.info())
     return facilities_nearby_nums
+
 
 def main():
     if len(sys.argv) != 5:
