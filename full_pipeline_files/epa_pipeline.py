@@ -37,7 +37,7 @@ def temp_holdout_prep(facilities_csv, evaluations_csv, violations_csv,
 def temporal_split(evals_df, vios_df, snc_df):
     eval_train, eval_test, etr_ends, ete_ends = ml.temp_holdout(evals_df,
                                                               'EVALUATION_START_DATE', 24, 24)
-    vio_train, vio_test vtr_ends, vte_ends = ml.temp_holdout(vios_df, 'DATE_VIOLATION_DETERMINED', 24, 24)
+    vio_train, vio_test, vtr_ends, vte_ends = ml.temp_holdout(vios_df, 'DATE_VIOLATION_DETERMINED', 24, 24)
     snc_train, snc_test, str_ends, ste_ends = ml.temp_holdout(snc_df, 'YRMONTH', 24, 24)
 
     trains = [eval_train, vio_train, snc_train]
@@ -49,19 +49,19 @@ def temporal_split(evals_df, vios_df, snc_df):
 
 def generate_features(trains, tests, train_ends, test_ends, facs_df):
     p = trains + tests
-    train_test_with_features = []
+    trains = []
+    tests = []
 
     for period, dfs in enumerate(p[0]):
 
-        train_test_with_features.append(
+        trains.append(
             cf.create_all_features(facs_df, dfs, p[1][period], p[2][period],
-                                   train_ends[period], test_ends[period]))
-        train_test_with_features.append(
+                                   train_ends[period]))
+        tests.append(
             cf.create_all_features(facs_df, p[3][period], p[4][period],
-                                   p[5][period], train_ends[period],
-                                   test_ends[period]))
+                                   p[5][period], test_ends[period]))
 
-    return train_test_with_features
+    return trains, tests
 
 def run_models(grid_size, plots, list_of_trainx, list_of_trainy,
                list_of_testx, list_of_testy):
@@ -81,7 +81,7 @@ def run_models(grid_size, plots, list_of_trainx, list_of_trainy,
                                                                feat_list)
 
     return predictions, models, metrics
-    
+
 
         
 def main():

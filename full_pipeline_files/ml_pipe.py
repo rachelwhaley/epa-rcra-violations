@@ -120,7 +120,7 @@ def temp_holdout(df, date_col, period, holdout):
 
     first = df[date_col].min()
     training_ends = first + period
-    testing_begins = train_ends + holdout
+    testing_begins = training_ends + holdout
     last = df[date_col].max()
     trains = []
     tests = []
@@ -135,12 +135,8 @@ def temp_holdout(df, date_col, period, holdout):
         train_ends.append(training_ends)
         test_ends.append((testing_begins + period))
         first += period
-        train_ends += period
+        training_ends += period
         testing_begins += period
-        print('training_begins: ', trains[-1][date_col].min())
-        print('training_ends: ', trains[-1][date_col].max())
-        print('testing_begins: ', tests[-1][date_col].min())
-        print('testing_ends: ', tests[-1][date_col].max())
 
     return trains, tests, train_ends, test_ends
 
