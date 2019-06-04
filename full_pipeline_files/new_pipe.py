@@ -4,6 +4,8 @@ A new pipeline
 
 import pandas as pd
 import has_violation
+import epa_pipeline
+import ml_pipe as ml
 
 def pipeline():
     '''
@@ -13,9 +15,10 @@ def pipeline():
     df = has_violation.go()
     print("Dataframe created")
     print("Creating temporal split")
-    train_features, train_variable, test_features, test_variable = \
+    list_of_trainx, list_of_trainy, list_of_testx, list_of_testy, features = \
         temporal_split(df)
-    return True
+    return epa_pipeline.run_models('small', 'show', list_of_trainx, list_of_trainy,
+               list_of_testx, list_of_testy, features)
 
 def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
     to_ignore=['ID_NUMBER'], variable='HasViolation'):
@@ -54,7 +57,21 @@ def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
         training_ends += period
         testing_begins += period
 
-    return train_features, train_variable, test_features, test_variable
+    return train_features, train_variable, test_features, test_variable, features
+
+def run_models(grid_size, plots, list_of_trainx, list_of_trainy,
+               list_of_testx, list_of_testy, features):
+    '''
+    takes features and y data for all train and test periods and fits/runs all
+    models on grid on all
+    '''
+    clfs, grid = ml.define_clfs_params(grid_size)
+
+    predictions, models, metrics = ml.model_analyzer_over_time(clfs, grid,\
+        plots, thresholds, list_of_trainx, list_of_trainy,\
+        list_of_testx, list_of_testy, features)
+
+    return predictions, models, metrics
 
 if __name__ == "__main__":
     pipeline() 
