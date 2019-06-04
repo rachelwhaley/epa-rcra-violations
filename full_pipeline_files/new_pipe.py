@@ -9,7 +9,10 @@ def pipeline():
     '''
     Goes from the beginning to the end of the pipeline
     '''
+    print("Creating dataframe")
     df = has_violation.go()
+    print("Dataframe created")
+    print("Creating temporal split")
     train_features, train_variable, test_features, test_variable = \
         temporal_split(df)
     return True

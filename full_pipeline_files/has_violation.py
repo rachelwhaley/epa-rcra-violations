@@ -63,20 +63,24 @@ def flag_lqg(facilities_df):
     return facilities_df
 
 def go():
+    print("Uploading")
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
-    facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
+    facilities_df = pd.read_csv('RCRA_FACILITIES.csv', nrows=1000)
+    print("Uploaded")
+    print("creating base df")
     has_vios_df = has_violation(facilities_df, violations_df, 2011, 2018)
+    print("with lqgs")
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[['ID_NUMBER', "IsLQG", "IsTSDF"]], on="ID_NUMBER", how="left")
 
     print(has_vios_df["IsLQG"].describe())
     print(has_vios_df['IsTSDF'].describe())
 
-    has_vios_df.to_csv("has_vios.csv")
+    #has_vios_df.to_csv("has_vios.csv")
 
     print(has_vios_df.head())
 
-    return has_vios
+    return has_vios_df
 
 if __name__ == "__main__":
     go()
