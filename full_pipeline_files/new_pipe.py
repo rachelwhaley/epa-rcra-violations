@@ -12,6 +12,7 @@ def pipeline():
     df = has_violation.go()
     train_features, train_variable, test_features, test_variable = \
         temporal_split(df)
+    return True
 
 def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
     to_ignore=['ID_NUMBER'], variable='HasViolation'):
@@ -50,4 +51,7 @@ def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
         training_ends += period
         testing_begins += period
 
-    return train_features, train_variable, test_features, test_variable  
+    return train_features, train_variable, test_features, test_variable
+
+if __name__ == "__main__":
+    pipeline() 

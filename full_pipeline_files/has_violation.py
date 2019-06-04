@@ -39,8 +39,8 @@ def has_violation(facilities_df, violations_df, start_year, end_year):
 
     print(facs_by_year.head())
 
-    violation_df['HasViolation'] = 1
-    facs_by_year = pd.merge(facs_by_year, violation_df[['HasViolation',fac_id, eval_year]], left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
+    violations_df['HasViolation'] = 1
+    facs_by_year = pd.merge(facs_by_year, violations_df[['HasViolation',fac_id, eval_year]], left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
     facs_by_year['HasViolation'].fillna(0, inplace=True)
 
     # facs_by_year.to_csv("please_work.csv")
@@ -63,9 +63,9 @@ def flag_lqg(facilities_df):
     return facilities_df
 
 def go():
-    violation_df = pd.read_csv('RCRA_VIOLATIONS.csv')
+    violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
-    has_vios_df = has_violation(facilities_df, violation_df, 2011, 2018)
+    has_vios_df = has_violation(facilities_df, violations_df, 2011, 2018)
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[['ID_NUMBER', "IsLQG", "IsTSDF"]], on="ID_NUMBER", how="left")
 
@@ -79,4 +79,4 @@ def go():
     return has_vios
 
 if __name__ == "__main__":
-    return go()
+    go()
