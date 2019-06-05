@@ -178,7 +178,7 @@ def go():
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
 
     for y in years:
-        prin
+        print(y)
         filt = violations_df[eval_year] == y
         vio_filt = violations_df[filt]
         max_date = datetime.datetime(y, 12, 31, 23, 59)
