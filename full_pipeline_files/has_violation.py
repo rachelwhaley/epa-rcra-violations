@@ -240,6 +240,58 @@ def num_inspections(evals_df, max_date, facilities_df):
 
     return facilities_with_features_df.drop(columns=[zips, states])
 
+def type_waste(facilities_df):
+    '''
+    calculates:
+        dummy variable for waste code/ code owner/ naics code
+            for a single facility
+        calculates all facilities with waste code/ code owner/ naics code
+            in a zip/state
+
+    Generates features based on the type of waste created
+    '''
+    ids_waste = 'EPA Handler ID'
+    ids_naics = 'ID_NUMBER'
+    waste_codes = 'Hazardous Waste Code'
+    code_owner = 'Hazardous Waste Code Owner'
+    naics = 'NAICS_CODE'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+
+    print("Importing")
+    naics_df = pd.read_csv('RCRA_NAICS.csv')
+    waste_codes_df = pd.read_csv('Biennial_Report_GM_Waste_Code.csv')
+
+    print("Merging")
+    naics_df = pd.merge(\
+        naics_df[[ids_naics, naics]],\
+        facilities_df[[ids_naics, zips, states]],
+        on=ids_naics, how='left')
+
+    facilities_with_features_df = pd.merge(\
+        naics_df[[ids_naics, naics, zips, states]],\
+        waste_codes_df[[ids_waste, waste_codes, code_owner]],\
+        left_on=ids_naics, right_on=ids_waste,\
+        how='left')
+
+    print("Looping")
+    for col in [waste_codes, code_owner, naics]:
+        ser = facilities_with_features_df[col]
+        val_unique = ser.unique()
+        for val in val_unique:
+            print(col + " : " + str(val))
+            new_col = col + str(val)
+            facilities_with_features_df[new_col] = facilities_with_features_df[waste_codes]\
+                .apply(lambda x: 1 if x == val else 0)
+            for group in [zips, states]:
+                to_merge = facilities_with_features_df.groupby(group)[new_col].sum()\
+                    .reset_index()\
+                    .rename(columns={new_col:new_col+group})
+                facilities_with_features_df = pd.merge(facilities_with_features_df, to_merge,\
+                    on=group,how='left')
+        
+    return facilities_with_features_df.drop(columns=[waste_codes, code_owner, zips, naics, states, ids_waste])
+
 def go():
     
     ids = 'ID_NUMBER'
@@ -256,7 +308,7 @@ def go():
     #violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
     evaluations_df = pd.read_csv('RCRA_EVALUATIONS.csv')
-    print("Cleaning dates")
+    print("Creating dates")
     for df_col in [(violations_df, date), (violations_df, actual),\
         (violations_df, scheduled), (evaluations_df, evals_date)]:
         
@@ -278,6 +330,11 @@ def go():
     print("Number of facilities")
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
+    print("Waste Codes")
+    facs_waste = type_waste(facilities_df)
+    has_vios_df = pd.merge(has_vios_df, num_facs, on=ids, how="left")
+
+    return has_vios_df
 
     has_vios_df = has_vios_df.drop_duplicates(subset=[ids, eval_year])
 
@@ -303,6 +360,7 @@ def go():
     has_vios_df = pd.merge(has_vios_df, prev_evals, left_on=[ids, eval_year],\
         right_on=[ids, merge_date], how="left").drop(columns=merge_date)
     
+    print("Cleaning")
     for col in list(has_vios_df.columns):
         if col.startswith('late') or col.startswith('early') or col.startswith('sum'):
             has_vios_df[col] = has_vios_df[col].fillna(value=0)
