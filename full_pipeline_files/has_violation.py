@@ -18,7 +18,6 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     eval_year = 'YEAR_EVALUATED'
     next_year = 'NEXT_YEAR'
     has_vio = 'HasViolation'
-    had = 'ViolationLastYear'
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
     date = 'DATE_VIOLATION_DETERMINED'
@@ -46,17 +45,15 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     facs_by_year = pd.merge(facs_by_year, violations_df[[has_vio,fac_id, eval_year]],\
         left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
     
+    facs_by_year[has_vio].fillna(0, inplace=True)
     violations_df[next_year] = violations_df[eval_year] + 1
-    violations_df[had] = 1
-    facs_by_year = pd.merge(facs_by_year, violations_df[[had,fac_id, next_year]],\
-        left_on=[fac_id, eval_year], right_on=[fac_id, next_year], how='left')
 
-    facs_by_year = pd.merge(facs_by_year, facilities_with_features_df, on=fac_id, how='left')
+    facs_by_year = facs_by_year.drop_duplicates(subset=[fac_id, eval_year])
 
+    prev_vios = pd.DataFrame()
     for y in years:
         vios_this_yr = violations_df[violations_df[next_year] == y]
         max_date = datetime.datetime(y, 1, 1, 0, 0)
-        print(vios_this_yr.head())
         for group in [fac_id, zips, states]:
             label = "_VIOLATIONS_IN_" + group
             count = vios_this_yr.groupby(group)\
@@ -68,15 +65,24 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
                 .reset_index().rename(\
                 columns={date:"DAYS_SINCE" + label})
             for gb in [count, last]:
-                gb[next_year] = y
-                facs_by_year = pd.merge(facs_by_year, gb,\
-                    left_on=[group, eval_year], right_on=[group, next_year], how='left')
-                print("Merged " + group)
+                vios_this_yr = pd.merge(vios_this_yr, gb, on=group, how='left')
+                print(str(y) + " Merged " + group)
+            prev_vios = pd.concat([prev_vios, vios_this_yr], ignore_index=True)
 
-    for col in [had, has_vio]:
-        facs_by_year[col].fillna(0, inplace=True)
+    facs_by_year = pd.merge(facs_by_year, prev_vios[[fac_id,'DAYS_SINCE_VIOLATIONS_IN_ID_NUMBER',\
+       'DAYS_SINCE_VIOLATIONS_IN_STATE_CODE',\
+       'DAYS_SINCE_VIOLATIONS_IN_ZIP_CODE',\
+       'NUMBER_VIOLATIONS_IN_ID_NUMBER', 'NUMBER_VIOLATIONS_IN_STATE_CODE',\
+       'NUMBER_VIOLATIONS_IN_ZIP_CODE',next_year]], left_on=[fac_id, eval_year],\
+        right_on=[fac_id, next_year], how='left')
 
-    return facs_by_year.drop_duplicates(subset=[fac_id, eval_year]).drop(columns=next_year), years
+    for col in list(has_vios_df.columns):
+        if col.startswith('NUMBER'):
+            has_vios_df[col] = has_vios_df[col].fillna(value=0)
+        elif col.startswith('DAYS'):
+            has_vios_df[col] = has_vios_df[col].fillna(value=-1)
+
+    return facs_by_year.drop(columns=next_year), years
 
 
 def flag_lqg(facilities_df):
@@ -226,10 +232,7 @@ def go():
         vio_filt = time_late_early(vio_filt, max_date, facilities_df)
         print(vio_filt.head())
         vio_filt[merge_date] = y
-        if late_early.empty:
-            late_early = vio_filt
-        else:
-            late_early = pd.concat([late_early, vio_filt], ignore_index=True)
+        late_early = pd.concat([late_early, vio_filt], ignore_index=True)
 
     has_vios_df = pd.merge(has_vios_df, vio_filt, left_on=[ids, eval_year],\
         right_on=[ids, merge_date], how="left").drop(columns=merge_date)
@@ -237,7 +240,7 @@ def go():
         if col.startswith('late') or col.startswith('early'):
             has_vios_df[col] = has_vios_df[col].fillna(value=0)
         elif col.startswith('last'):
-            has_vios_df[col] = has_vios_df[col].fillna(value=float(-1))
+            has_vios_df[col] = has_vios_df[col].fillna(value=-1)
 
     return has_vios_df
 
