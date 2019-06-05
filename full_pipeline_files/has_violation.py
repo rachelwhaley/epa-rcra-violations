@@ -66,7 +66,6 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
                 columns={date:"DAYS_SINCE" + label})
             for gb in [count, last]:
                 vios_this_yr = pd.merge(vios_this_yr, gb, on=group, how='left')
-                print(str(y) + " Merged " + group)
             prev_vios = pd.concat([prev_vios, vios_this_yr], ignore_index=True)
 
     facs_by_year = pd.merge(facs_by_year, prev_vios[[fac_id,'DAYS_SINCE_VIOLATIONS_IN_ID_NUMBER',\
@@ -127,7 +126,7 @@ def combine(more_info_df, facilities_df):
         .size().reset_index()
     data = {ids: gb[ids], zips: gb[zips], states: gb[states]}
     facilities_with_features_df = pd.DataFrame(data=data)
-    return facilities_with_features_df, more_info_df
+    return facilities_with_features_df.drop_duplicates(subset=[ids]), more_info_df
 
 def time_late_early(violations_df, max_date, facilities_df):
     '''
@@ -217,7 +216,7 @@ def num_inspections(evals_df, max_date, facilities_df):
     zips = 'ZIP_CODE'
     states = 'STATE_CODE'
 
-    facilities_with_features_df, evals_df = create_final(evals_df, facilities_df)
+    facilities_with_features_df, evals_df = combine(evals_df, facilities_df)
     
     for group in [ids, zips, states]:
         sums = evals_df.groupby(group) \
@@ -280,7 +279,9 @@ def go():
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
 
-    print("Early and Late")
+    has_vios_df = has_vios_df.drop_duplicates(subset=[ids, eval_year])
+
+    print("Early and Late / Evaluations")
     late_early = pd.DataFrame()
     prev_evals = pd.DataFrame()
     for y in years:
@@ -292,14 +293,15 @@ def go():
         eval_filt = num_inspections(eval_filt, max_date, facilities_df)
         for filt in [vio_filt, eval_filt]:
             filt[merge_date] = y
-        for filt_df in [(vio_filt, late_early),(eval_filt, prev_evals)]:
-            filt, df = filt_df
-            df = pd.concat([df, filt], ignore_index=True)
+        late_early = pd.concat([late_early, vio_filt], ignore_index=True)
+        prev_evals = pd.concat([prev_evals, eval_filt], ignore_index=True)
 
     print("Merging")
-    for new_info in [late_early, prev_evals]:
-        has_vios_df = pd.merge(has_vios_df, new_info, left_on=[ids, eval_year],\
-            right_on=[ids, merge_date], how="left").drop(columns=merge_date)
+    has_vios_df = pd.merge(has_vios_df,\
+        late_early, left_on=[ids, eval_year],\
+        right_on=[ids, merge_date], how="left").drop(columns=merge_date)
+    has_vios_df = pd.merge(has_vios_df, prev_evals, left_on=[ids, eval_year],\
+        right_on=[ids, merge_date], how="left").drop(columns=merge_date)
     
     for col in list(has_vios_df.columns):
         if col.startswith('late') or col.startswith('early') or col.startswith('sum'):
