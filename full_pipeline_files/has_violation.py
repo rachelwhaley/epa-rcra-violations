@@ -156,7 +156,8 @@ def time_late_early(violations_df, max_date, facilities_df):
                     facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
                         .fillna(value=float('Inf'))
 
-    return facilities_with_features_df.drop(columns=[zips,states])
+    #!!!I need drop_duplicates() to run!!!
+    return facilities_with_features_df.drop(columns=[zips,states]).drop_duplicates()
 
 def go():
     ids = 'ID_NUMBER'
@@ -190,7 +191,7 @@ def go():
             late_early = vio_filt
         else:
             late_early = pd.concat([late_early, vio_filt], ignore_index=True)
-    has_vios_df = pd.merge(has_vios_df, vio_filt, on=ids, how="left")
+    has_vios_df = pd.merge(has_vios_df, vio_filt, on=[ids, eval_year], how="left")
     for col in list(has_vios_df.columns):
         if col.startswith('late') or col.startswith('early'):
             has_vios_df[col] = has_vios_df[col].fillna(value=0)
