@@ -118,8 +118,7 @@ def time_late_early(violations_df, max_date, facilities_df):
     facilities_with_features_df, violations_df = combine(violations_df, facilities_df)
 
     for col in [actual, scheduled]:
-        violations_df[col] = pd.to_datetime(violations_df[col])
-        print(col + " to datetime")
+        violations_df[col] = pd.to_datetime(violations_df[col], format='%m/%d/%Y', errors='coerce')
 
     violations_df[diff] = violations_df[actual] - violations_df[scheduled]
     violations_df[diff] = violations_df[diff]\
@@ -163,6 +162,8 @@ def time_late_early(violations_df, max_date, facilities_df):
 def go():
     ids = 'ID_NUMBER'
     date = 'DATE_VIOLATION_DETERMINED'
+    actual = 'ACTUAL_RTC_DATE'
+    scheduled = 'SCHEDULED_COMPLIANCE_DATE'
     eval_year = 'YEAR_EVALUATED'
 
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
@@ -171,9 +172,10 @@ def go():
     print('cleaned')
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
     
-    violations_df[['M','D','Y']] = violations_df[date]\
-        .str.split('/', expand=True)
-    violations_df[eval_year] = violations_df['Y'].astype(int)
+    violations_df[eval_year] = violations_df[date].apply(lambda x: x.year)
+    #violations_df[['M','D','Y']] = violations_df[date]\
+        #.str.split('/', expand=True)
+    #violations_df[eval_year] = violations_df['Y'].astype(int)
 
     has_vios_df, years = has_violation(facilities_df, violations_df)
     with_lqgs = flag_lqg(facilities_df)
