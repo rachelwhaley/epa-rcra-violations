@@ -70,7 +70,7 @@ def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
     takes features and y data for all train and test periods and fits/runs all
     models on grid on all
     '''
-    clfs, grid = ml.define_clfs_params(grid_size)
+    clfs = g.clfs0
     grid = g.grid0
 
     predictions, models, metrics = ml.model_analyzer_over_time(clfs, grid,
@@ -81,10 +81,13 @@ def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
                                                                list_of_testx,
                                                                list_of_testy)
 
-    return predictions, models, metrics
+    master_metrics = pd.DataFrame(columns=list(metrics[0].columns))
 
+    for df in metrics:
+        master_metrics = pd.concat([master_metrics, df], axis=0)
 
-        
+    return predictions, models, nw.rank(master_metrics, 'model', 'precision_0.2pct')
+
 def main():
     if len(sys.argv) != 6:
         print("Usage: analyze_projects.py \
@@ -117,8 +120,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-                                            
-
-
