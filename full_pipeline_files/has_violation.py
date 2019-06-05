@@ -19,7 +19,9 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     next_year = 'NEXT_YEAR'
     has_vio = 'HasViolation'
     had = 'ViolationLastYear'
-    num_had = 'NumberViosLastYear'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+    date = 'DATE_VIOLATION_DETERMINED'
     num_copies = end_year - start_year
     y = start_year
     id_lst = []
@@ -38,6 +40,8 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     facs_by_year = pd.DataFrame(data=data)
 
 
+    facilities_with_features_df, violations_df = combine(violations_df, facilities_df)
+
     violations_df[has_vio] = 1
     facs_by_year = pd.merge(facs_by_year, violations_df[[has_vio,fac_id, eval_year]],\
         left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
@@ -45,12 +49,34 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     violations_df[next_year] = violations_df[eval_year] + 1
     violations_df[had] = 1
     facs_by_year = pd.merge(facs_by_year, violations_df[[had,fac_id, next_year]],\
-        left_on=[fac_id, eval_year], right_on=[fac_id, next_year], how='left').drop(columns=next_year)
+        left_on=[fac_id, eval_year], right_on=[fac_id, next_year], how='left')
+
+    facs_by_year = pd.merge(facs_by_year, facilities_with_features_df, on=fac_id, how='left')
+
+    for y in years:
+        vios_this_yr = violations_df[violations_df[next_year] == y]
+        max_date = datetime.datetime(y, 1, 1, 0, 0)
+        print(vios_this_yr.head())
+        for group in [fac_id, zips, states]:
+            label = "_VIOLATIONS_IN_" + group
+            count = vios_this_yr.groupby(group)\
+                [has_vio].sum().reset_index().rename(\
+                columns={has_vio:"NUMBER"+label})
+            last = vios_this_yr.groupby(group)\
+                [date].max()\
+                .apply(lambda x: (max_date - x).days)\
+                .reset_index().rename(\
+                columns={date:"DAYS_SINCE" + label})
+            for gb in [count, last]:
+                gb[next_year] = y
+                facs_by_year = pd.merge(facs_by_year, gb,\
+                    left_on=[group, eval_year], right_on=[group, next_year], how='left')
+                print("Merged " + group)
 
     for col in [had, has_vio]:
         facs_by_year[col].fillna(0, inplace=True)
 
-    return facs_by_year.drop_duplicates(subset=[fac_id, eval_year]), years
+    return facs_by_year.drop_duplicates(subset=[fac_id, eval_year]).drop(columns=next_year), years
 
 
 def flag_lqg(facilities_df):
