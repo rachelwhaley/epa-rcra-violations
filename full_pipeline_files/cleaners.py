@@ -24,9 +24,14 @@ def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
     '''
     looks for out of range dates and brings them to range
     '''
+<<<<<<< HEAD
     oor_dict = {'19': 2000, '1919': 100, '1943': 50, '1971': 20, '1974': 20,
                '1979': 18}
     oor_dict = OrderedDict(oor_dict)
+=======
+    oor_dict = {'19': 2000, '1919': 100, '1943': 50,\
+        '1971': 20, '1974': 20, '1979': 18}
+>>>>>>> ae50a2ec9538cdac6910463d09d55aca2a1a222c
     df[['M','D','Y']] = df[stand_form_col].str.split(pat='/', expand=True)
     df['Y'] = df.Y.astype(int)
 
@@ -42,7 +47,6 @@ def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
     df[stand_form_col] = df[stand_form_col].astype('datetime64')
     df.drop(['M','D','Y'], axis=1, inplace=True)
     start_date=pd.to_datetime(start_date)
-    print(df[stand_form_col].dtype)
 
     return df[(df[stand_form_col] > start_date)]
 
