@@ -205,9 +205,11 @@ def go():
     comp_year = 'YEAR_IN_COMPLIANCE'
     merge_date = 'DATE_TO_MERGE'
 
+    print("Importing")
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     #violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
+    print("Cleaning dates")
     for col in [date, actual, scheduled]:
         violations_df[col] = pd.to_datetime(violations_df[col], format='%m/%d/%Y', errors='coerce')
     
@@ -216,13 +218,17 @@ def go():
     violations_df[comp_year] = np.where(violations_df[comp_year]==0,violations_df[eval_year] + 1,\
         violations_df[comp_year])
 
+    print("Making table with obvious features")
     has_vios_df, years = has_violation(facilities_df, violations_df)
-    return has_vios_df
+
+    print("LQGs")
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[[ids, "IsLQG", "IsTSDF"]], on=ids, how="left")
+    print("Number of facilities")
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
 
+    print("Early and Late")
     late_early = pd.DataFrame()
     for y in years:
         print(y)
@@ -230,12 +236,13 @@ def go():
         vio_filt = violations_df[filt]
         max_date = datetime.datetime(y, 1, 1, 0, 0)
         vio_filt = time_late_early(vio_filt, max_date, facilities_df)
-        print(vio_filt.head())
         vio_filt[merge_date] = y
         late_early = pd.concat([late_early, vio_filt], ignore_index=True)
 
+    print("Merging")
     has_vios_df = pd.merge(has_vios_df, vio_filt, left_on=[ids, eval_year],\
         right_on=[ids, merge_date], how="left").drop(columns=merge_date)
+    
     for col in list(has_vios_df.columns):
         if col.startswith('late') or col.startswith('early'):
             has_vios_df[col] = has_vios_df[col].fillna(value=0)
