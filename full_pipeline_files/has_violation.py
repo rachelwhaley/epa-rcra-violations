@@ -152,6 +152,8 @@ def time_late_early(violations_df, max_date, facilities_df):
                 if bool_val:
                     to_fill = "last " + label
                     facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
+                        .apply(lambda x: x if x >=0 else 0)
+                    facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
                         .fillna(value=float('Inf'))
 
     return facilities_with_features_df.drop(columns=[zips,states])
@@ -177,13 +179,18 @@ def go():
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
 
-    for y in years[5:]:
+    late_early = pd.DataFrame()
+    for y in years[:]:
         print(y)
         filt = violations_df[eval_year] == y
         vio_filt = violations_df[filt]
         max_date = datetime.datetime(y, 12, 31, 23, 59)
         vio_filt = time_late_early(vio_filt, max_date, facilities_df)
-        has_vios_df = pd.merge(has_vios_df, vio_filt, on=ids, how="left")
+        if late_early.empty:
+            late_early = vio_filt
+        else:
+            late_early = pd.concat([late_early, vio_filt], ignore_index=True)
+    has_vios_df = pd.merge(has_vios_df, vio_filt, on=ids, how="left")
 
 
     return has_vios_df
