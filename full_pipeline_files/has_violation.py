@@ -177,7 +177,7 @@ def go():
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
 
-    for y in years:
+    for y in years[5:]:
         print(y)
         filt = violations_df[eval_year] == y
         vio_filt = violations_df[filt]
