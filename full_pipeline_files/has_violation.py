@@ -16,6 +16,10 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     '''   
     fac_id = 'ID_NUMBER'
     eval_year = 'YEAR_EVALUATED'
+    next_year = 'NEXT_YEAR'
+    has_vio = 'HasViolation'
+    had = 'ViolationLastYear'
+    num_had = 'NumberViosLastYear'
     num_copies = end_year - start_year
     y = start_year
     id_lst = []
@@ -34,11 +38,17 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     facs_by_year = pd.DataFrame(data=data)
 
 
-    violations_df['HasViolation'] = 1
-    facs_by_year = pd.merge(facs_by_year, violations_df[['HasViolation',fac_id, eval_year]],\
+    violations_df[has_vio] = 1
+    facs_by_year = pd.merge(facs_by_year, violations_df[[has_vio,fac_id, eval_year]],\
         left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
-    facs_by_year['HasViolation'].fillna(0, inplace=True)
+    
+    violations_df[next_year] = violations_df[eval_year] + 1
+    violations_df[had] = 1
+    facs_by_year = pd.merge(facs_by_year, violations_df[[had,fac_id, next_year]],\
+        left_on=[fac_id, eval_year], right_on=[fac_id, next_year], how='left').drop(columns=next_year)
 
+    for col in [had, has_vio]:
+        facs_by_year[col].fillna(0, inplace=True)
 
     return facs_by_year.drop_duplicates(subset=[fac_id, eval_year]), years
 
@@ -152,7 +162,6 @@ def time_late_early(violations_df, max_date, facilities_df):
                     facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
                         .apply(lambda x: x if x >= 0 else 0)
 
-    #!!!I need drop_duplicates() to run!!!
     return facilities_with_features_df.drop(columns=[zips,states])
 
 def go():
@@ -165,10 +174,9 @@ def go():
     merge_date = 'DATE_TO_MERGE'
 
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
-    #!!!Need to get cleaners to work!!!
-    violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
+    #violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
-    for col in [actual, scheduled]:
+    for col in [date, actual, scheduled]:
         violations_df[col] = pd.to_datetime(violations_df[col], format='%m/%d/%Y', errors='coerce')
     
     violations_df[eval_year] = violations_df[date].apply(lambda x: x.year)
@@ -177,6 +185,7 @@ def go():
         violations_df[comp_year])
 
     has_vios_df, years = has_violation(facilities_df, violations_df)
+    return has_vios_df
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[[ids, "IsLQG", "IsTSDF"]], on=ids, how="left")
     num_facs = num_facilities(facilities_df)
