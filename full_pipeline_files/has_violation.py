@@ -76,11 +76,11 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
        'NUMBER_VIOLATIONS_IN_ZIP_CODE',next_year]], left_on=[fac_id, eval_year],\
         right_on=[fac_id, next_year], how='left')
 
-    for col in list(has_vios_df.columns):
+    for col in list(facs_by_year.columns):
         if col.startswith('NUMBER'):
-            has_vios_df[col] = has_vios_df[col].fillna(value=0)
+            facs_by_year[col] = facs_by_year[col].fillna(value=0)
         elif col.startswith('DAYS'):
-            has_vios_df[col] = has_vios_df[col].fillna(value=-1)
+            facs_by_year[col] = facs_by_year[col].fillna(value=-1)
 
     return facs_by_year.drop(columns=next_year), years
 
