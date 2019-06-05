@@ -196,7 +196,53 @@ def time_late_early(violations_df, max_date, facilities_df):
 
     return facilities_with_features_df.drop(columns=[zips,states])
 
+def num_inspections(evals_df, max_date, facilities_df):
+    
+    '''
+    Inputs:
+        facilities_df: a dataframe with all evaluations information
+        max_date: the maximum date in our training/testing set
+
+    Calculates:
+        Number of inspections
+        Days since last inspection
+
+        for all locations in a zip/state
+
+        within date ranges (date2 before date1)
+        before date1
+    '''
+    date = 'EVALUATION_START_DATE'
+    ids = 'ID_NUMBER'
+    zips = 'ZIP_CODE'
+    states = 'STATE_CODE'
+
+    facilities_with_features_df, evals_df = create_final(evals_df, facilities_df)
+    
+    for group in [ids, zips, states]:
+        sums = evals_df.groupby(group) \
+            .size().reset_index()
+        last = evals_df.groupby(group) \
+            [date].max() \
+            .apply(lambda x: (max_date - pd.to_datetime(x)).days) \
+            .reset_index().rename(columns={date: 'last' + group})
+        for gb_bool in [(sums, False), (last, True)]:
+            gb, bool_val = gb_bool
+            facilities_with_features_df = \
+                pd.merge(facilities_with_features_df, gb, on=group, how='left')\
+                .rename(columns={0: "sum_eval" + group})
+            if bool_val:
+                to_fill = 'last' + group
+                facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill] \
+                    .fillna(value=-1)
+                facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
+                    .apply(lambda x: x if x >= 0 else 0)
+    
+
+    return facilities_with_features_df.drop(columns=[zips, states])
+
 def go():
+    
     ids = 'ID_NUMBER'
     date = 'DATE_VIOLATION_DETERMINED'
     actual = 'ACTUAL_RTC_DATE'
@@ -204,19 +250,25 @@ def go():
     eval_year = 'YEAR_EVALUATED'
     comp_year = 'YEAR_IN_COMPLIANCE'
     merge_date = 'DATE_TO_MERGE'
+    evals_date = 'EVALUATION_START_DATE'
 
     print("Importing")
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     #violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
+    evaluations_df = pd.read_csv('RCRA_EVALUATIONS.csv')
     print("Cleaning dates")
-    for col in [date, actual, scheduled]:
-        violations_df[col] = pd.to_datetime(violations_df[col], format='%m/%d/%Y', errors='coerce')
-    
+    for df_col in [(violations_df, date), (violations_df, actual),\
+        (violations_df, scheduled), (evaluations_df, evals_date)]:
+        
+        df, col = df_col
+        df[col] = pd.to_datetime(df[col], format='%m/%d/%Y', errors='coerce')
+
     violations_df[eval_year] = violations_df[date].apply(lambda x: x.year)
     violations_df[comp_year] = violations_df[actual].apply(lambda x: x.year).fillna(0)
     violations_df[comp_year] = np.where(violations_df[comp_year]==0,violations_df[eval_year] + 1,\
         violations_df[comp_year])
+    evaluations_df[eval_year] = evaluations_df[evals_date].apply(lambda x: x.year)
 
     print("Making table with obvious features")
     has_vios_df, years = has_violation(facilities_df, violations_df)
@@ -230,21 +282,27 @@ def go():
 
     print("Early and Late")
     late_early = pd.DataFrame()
+    prev_evals = pd.DataFrame()
     for y in years:
         print(y)
-        filt = violations_df[comp_year] == (y - 1)
-        vio_filt = violations_df[filt]
+        vio_filt = violations_df[violations_df[comp_year] == (y - 1)]
+        eval_filt = evaluations_df[evaluations_df[eval_year] == (y - 1)]
         max_date = datetime.datetime(y, 1, 1, 0, 0)
         vio_filt = time_late_early(vio_filt, max_date, facilities_df)
-        vio_filt[merge_date] = y
-        late_early = pd.concat([late_early, vio_filt], ignore_index=True)
+        eval_filt = num_inspections(eval_filt, max_date, facilities_df)
+        for filt in [vio_filt, eval_filt]:
+            filt[merge_date] = y
+        for filt_df in [(vio_filt, late_early),(eval_filt, prev_evals)]:
+            filt, df = filt_df
+            df = pd.concat([df, filt], ignore_index=True)
 
     print("Merging")
-    has_vios_df = pd.merge(has_vios_df, vio_filt, left_on=[ids, eval_year],\
-        right_on=[ids, merge_date], how="left").drop(columns=merge_date)
+    for new_info in [late_early, prev_evals]:
+        has_vios_df = pd.merge(has_vios_df, new_info, left_on=[ids, eval_year],\
+            right_on=[ids, merge_date], how="left").drop(columns=merge_date)
     
     for col in list(has_vios_df.columns):
-        if col.startswith('late') or col.startswith('early'):
+        if col.startswith('late') or col.startswith('early') or col.startswith('sum'):
             has_vios_df[col] = has_vios_df[col].fillna(value=0)
         elif col.startswith('last'):
             has_vios_df[col] = has_vios_df[col].fillna(value=-1)
