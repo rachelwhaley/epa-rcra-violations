@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import cleaners
+import numpy as np
 
 def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     '''
@@ -31,9 +32,6 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
 
     data = {fac_id: id_lst, eval_year: year_lst}
     facs_by_year = pd.DataFrame(data=data)
-    # return facs_by_year
-
-    
 
 
     violations_df['HasViolation'] = 1
@@ -41,10 +39,8 @@ def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
         left_on=[fac_id, eval_year], right_on=[fac_id, eval_year], how='left')
     facs_by_year['HasViolation'].fillna(0, inplace=True)
 
-    # facs_by_year.to_csv("please_work.csv")
 
-
-    return facs_by_year, years
+    return facs_by_year.drop_duplicates(subset=[fac_id, eval_year]), years
 
 
 def flag_lqg(facilities_df):
@@ -152,12 +148,12 @@ def time_late_early(violations_df, max_date, facilities_df):
                 if bool_val:
                     to_fill = "last " + label
                     facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
-                        .apply(lambda x: x if x >=0 else 0)
+                        .fillna(value=float(-1))
                     facilities_with_features_df[to_fill] = facilities_with_features_df[to_fill]\
-                        .fillna(value=float('Inf'))
+                        .apply(lambda x: x if x >= 0 else 0)
 
     #!!!I need drop_duplicates() to run!!!
-    return facilities_with_features_df.drop(columns=[zips,states]).drop_duplicates()
+    return facilities_with_features_df.drop(columns=[zips,states])
 
 def go():
     ids = 'ID_NUMBER'
@@ -165,14 +161,20 @@ def go():
     actual = 'ACTUAL_RTC_DATE'
     scheduled = 'SCHEDULED_COMPLIANCE_DATE'
     eval_year = 'YEAR_EVALUATED'
+    comp_year = 'YEAR_IN_COMPLIANCE'
+    merge_date = 'DATE_TO_MERGE'
 
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
+    #!!!Need to get cleaners to work!!!
     violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
     for col in [actual, scheduled]:
         violations_df[col] = pd.to_datetime(violations_df[col], format='%m/%d/%Y', errors='coerce')
     
     violations_df[eval_year] = violations_df[date].apply(lambda x: x.year)
+    violations_df[comp_year] = violations_df[actual].apply(lambda x: x.year).fillna(0)
+    violations_df[comp_year] = np.where(violations_df[comp_year]==0,violations_df[eval_year] + 1,\
+        violations_df[comp_year])
 
     has_vios_df, years = has_violation(facilities_df, violations_df)
     with_lqgs = flag_lqg(facilities_df)
@@ -183,21 +185,25 @@ def go():
     late_early = pd.DataFrame()
     for y in years:
         print(y)
-        filt = violations_df[eval_year] == y - 1
+        filt = violations_df[comp_year] == (y - 1)
         vio_filt = violations_df[filt]
+        print(vio_filt.head())
         max_date = datetime.datetime(y, 1, 1, 0, 0)
         vio_filt = time_late_early(vio_filt, max_date, facilities_df)
+        vio_filt[merge_date] = y
         if late_early.empty:
             late_early = vio_filt
         else:
             late_early = pd.concat([late_early, vio_filt], ignore_index=True)
-    has_vios_df = pd.merge(has_vios_df, vio_filt, on=[ids, eval_year], how="left")
+
+    has_vios_df = pd.merge(has_vios_df, vio_filt, left_on=[ids, eval_year],\
+        right_on=[ids, merge_date], how="left")
+    #.drop(columns=merge_date)
     for col in list(has_vios_df.columns):
         if col.startswith('late') or col.startswith('early'):
             has_vios_df[col] = has_vios_df[col].fillna(value=0)
         elif col.startswith('last'):
-            has_vios_df[col] = has_vios_df[col].fillna(value=float('Inf'))
-
+            has_vios_df[col] = has_vios_df[col].fillna(value=float(-1))
 
     return has_vios_df
 
