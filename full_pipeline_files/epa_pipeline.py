@@ -7,6 +7,7 @@ import combined_features_rachel as cf
 import model_analyzer as ma
 import ml_pipe as ml
 import cleaners as cl
+import grids as g
 import sys
 
 '''
@@ -70,6 +71,7 @@ def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
     models on grid on all
     '''
     clfs, grid = ml.define_clfs_params(grid_size)
+    grid = g.grid0
 
     predictions, models, metrics = ml.model_analyzer_over_time(clfs, grid,
                                                                plots, 
