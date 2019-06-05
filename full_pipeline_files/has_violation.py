@@ -330,11 +330,15 @@ def go():
     print("Number of facilities")
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
+    
+    '''
+    !!!WE NEED TO GET THIS WORKING OR SCRAP IT!!!
     print("Waste Codes")
     facs_waste = type_waste(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs, on=ids, how="left")
 
     return has_vios_df
+    '''
 
     has_vios_df = has_vios_df.drop_duplicates(subset=[ids, eval_year])
 
