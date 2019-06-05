@@ -27,6 +27,11 @@ def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
     oor_dict = {'19': 2000, '1919': 100, '1943': 50, '1971': 20, '1974': 20,
                '1979': 18}
     oor_dict = OrderedDict(oor_dict)
+<<<<<<< HEAD
+=======
+    #oor_dict = {'19': 2000, '1919': 100, '1943': 50,\
+        #'1971': 20, '1974': 20, '1979': 18}
+>>>>>>> d0ed0d4f4c113b8f00595605028d9a39566d78a1
     df[['M','D','Y']] = df[stand_form_col].str.split(pat='/', expand=True)
     df['Y'] = df.Y.astype(int)
 

@@ -20,6 +20,7 @@ def create_final(more_info_df, facilities_df):
 
 
 def time_late(violations_df, max_date, facilities_df):
+    #!!!ALREADY IN HAS_VIOLATION
     '''
     Inputs:
         violations_df: a dataframe with all violations information
@@ -177,6 +178,7 @@ def time_late(date1, date2, violations_df):
 
 
 def num_inspections(evals_df, max_date, facilities_df):
+    
     '''
     Inputs:
         facilities_df: a dataframe with all evaluations information
@@ -314,6 +316,7 @@ def type_waste(facilities_df):
 
 def num_facilities(facilities_df):
     """
+    !!!ALREADY IN HAS_VIOLATIONS
     !!!DONE!!!
 
     Calculates:
@@ -397,6 +400,7 @@ def create_eval_features(facilities_df, evals_df):
 
 
 def flag_lqg(facilities_df):
+    #!!!ALREADY IN HAS_VIOLATION
     """Adds a column to the data frame that is 1 if the facility is an LQG."""
     # 3 is the code for LQG according to the data documentation at
     #   https://echo.epa.gov/tools/data-downloads/rcrainfo-download-summary#download_files
