@@ -257,8 +257,8 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                 m = ma.ClassifierAnalyzer(model, p, name, thresholds,
                                             plots, x_train, y_train, x_test,
                                             y_test)
-                pd.concat([predictions, m.predictions], axis=1)
-                pd.concat([stats_df, m.metrics_matrix], axis=0)
+                predictions = pd.concat([predictions, m.predictions], axis=1)
+                stats_df = pd.concat([stats_df, m.metrics_matrix], axis=0)
                 models.append(m)
                 if plots == 'show':
                     print(m.name)
@@ -275,9 +275,7 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                     print('Error:',e)
                     continue
 
-    predictions['truth'] = y_test
-
-    return predictions, stats_df, models
+    return predictions, models, stats_df
 
 def model_analyzer_over_time(clfs, grid, plots, thresholds, list_of_x_train,
                              list_of_y_train, list_of_x_test, list_of_y_test):
@@ -292,7 +290,7 @@ def model_analyzer_over_time(clfs, grid, plots, thresholds, list_of_x_train,
     models = []
 
     for i, x in enumerate(list_of_x_train):
-        temp_preds, temp_stats, temp_models = model_analyzer(clfs, grid, plots,
+        temp_preds, temp_models, temp_stats = model_analyzer(clfs, grid, plots,
                                                              thresholds, x,
                                                              list_of_y_train[i],
                                                              list_of_x_test[i],
@@ -300,7 +298,7 @@ def model_analyzer_over_time(clfs, grid, plots, thresholds, list_of_x_train,
         predictions.append(temp_preds)
         models.extend(temp_models)
         stats.append(temp_stats)
-        
+
 
     return predictions, models, stats
         
