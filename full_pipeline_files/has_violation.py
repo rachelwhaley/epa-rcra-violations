@@ -164,6 +164,7 @@ def go():
     actual = 'ACTUAL_RTC_DATE'
     scheduled = 'SCHEDULED_COMPLIANCE_DATE'
     eval_year = 'YEAR_EVALUATED'
+    comp_year = 'COMPLIANCE_YEAR'
 
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
@@ -172,6 +173,7 @@ def go():
         violations_df[col] = pd.to_datetime(violations_df[col], format='%m/%d/%Y', errors='coerce')
     
     violations_df[eval_year] = violations_df[date].apply(lambda x: x.year)
+    violations_df[comp_year] = violations_df[actual].apply(lambda x: x.year)
 
     has_vios_df, years = has_violation(facilities_df, violations_df)
     with_lqgs = flag_lqg(facilities_df)
@@ -180,11 +182,11 @@ def go():
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
 
     late_early = pd.DataFrame()
-    for y in years[:]:
+    for y in years:
         print(y)
-        filt = violations_df[eval_year] == y
+        filt = violations_df[comp_year] <= y - 1
         vio_filt = violations_df[filt]
-        max_date = datetime.datetime(y, 12, 31, 23, 59)
+        max_date = datetime.datetime(y, 1, 1, 0, 0)
         vio_filt = time_late_early(vio_filt, max_date, facilities_df)
         if late_early.empty:
             late_early = vio_filt
