@@ -187,9 +187,9 @@ def go():
         print(y)
         filt = violations_df[comp_year] == (y - 1)
         vio_filt = violations_df[filt]
-        print(vio_filt.head())
         max_date = datetime.datetime(y, 1, 1, 0, 0)
         vio_filt = time_late_early(vio_filt, max_date, facilities_df)
+        print(vio_filt.head())
         vio_filt[merge_date] = y
         if late_early.empty:
             late_early = vio_filt
@@ -197,8 +197,7 @@ def go():
             late_early = pd.concat([late_early, vio_filt], ignore_index=True)
 
     has_vios_df = pd.merge(has_vios_df, vio_filt, left_on=[ids, eval_year],\
-        right_on=[ids, merge_date], how="left")
-    #.drop(columns=merge_date)
+        right_on=[ids, merge_date], how="left").drop(columns=merge_date)
     for col in list(has_vios_df.columns):
         if col.startswith('late') or col.startswith('early'):
             has_vios_df[col] = has_vios_df[col].fillna(value=0)
