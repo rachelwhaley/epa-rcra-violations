@@ -3,7 +3,7 @@ Group 13 -- Predicting RCRA Significant Violations
 '''
 import numpy as np
 import pandas as pd
-import combined_features_rachel as cf
+# import combined_features_rachel as cf
 import model_analyzer as ma
 import ml_pipe as ml
 import new_pipe as nw
@@ -49,6 +49,7 @@ def temporal_split(evals_df, vios_df, snc_df):
 
     return trains, tests, train_ends, test_ends
 
+'''
 def generate_features(trains, tests, train_ends, test_ends, facs_df):
     p = trains + tests
     trains = []
@@ -64,6 +65,7 @@ def generate_features(trains, tests, train_ends, test_ends, facs_df):
                                    p[5][period], test_ends[period]))
 
     return trains, tests
+'''
 
 def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
                list_of_testx, list_of_testy):
@@ -71,8 +73,8 @@ def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
     takes features and y data for all train and test periods and fits/runs all
     models on grid on all
     '''
-    clfs = g.clfs0
-    grid = g.grid0
+    clfs = g.clfstest  # g.clfs0
+    grid = g.test0  # g.grid0
 
     predictions, models, metrics = ml.model_analyzer_over_time(clfs, grid,
                                                                plots, 
@@ -90,6 +92,7 @@ def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
     return predictions, models, nw.rank(master_metrics, 'model', 'precision_0.2pct')
 
 def main():
+    """
     if len(sys.argv) != 6:
         print("Usage: analyze_projects.py \
         <facilities_filename> <evals_filename> <violations_filename> <snc_filename>\
@@ -118,6 +121,8 @@ def main():
             name = 'test_period{}'.format(test_count)
             x.to_csv(name + '.csv')
             print('saved: ', name)
+
+    """
 
 if __name__ == "__main__":
     main()

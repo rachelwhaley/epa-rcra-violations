@@ -298,7 +298,7 @@ def snc_info(facilities_df, snc_df):
     """Adds columns for info about SNC status."""
     # TODO: Need to add ANY SNC in time period
 
-    year = facilities_df['YEAR_EVALUATED']
+    # year = facilities_df['YEAR_EVALUATED']
     # filter snc for just that facility,
 
     # create snc year column and filter out everything before 2011
@@ -375,10 +375,10 @@ def go():
     print("Making table with obvious features")
     has_vios_df, years = has_violation(facilities_df, violations_df)
 
-    print("Adding snc variables")
-    with_snc_df = snc_info(facilities_df, snc_df)
-    has_vios_df = pd.merge(has_vios_df, with_snc_df[[ids, "SNC_Count", "More_Recent_SNC_Yes"]], on=ids, how="left")
-    print(has_vios_df.head())
+    # print("Adding snc variables")
+    # with_snc_df = snc_info(facilities_df, snc_df)
+    # has_vios_df = pd.merge(has_vios_df, with_snc_df[[ids, "SNC_Count", "More_Recent_SNC_Yes"]], on=ids, how="left")
+    # print(has_vios_df.head())
 
     print("LQGs")
     with_lqgs = flag_lqg(facilities_df)
