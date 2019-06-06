@@ -30,6 +30,7 @@ class ClassifierAnalyzer:
         self.truth = y_test
         self.t = thresholds
         self.metrics_matrix, self.predictions = self.make_prediction_matrix()
+        self.predictions['truth'] = self.truth.astype('int')
         self.roc_auc = None
 
     def __repr__(self):
@@ -48,7 +49,6 @@ class ClassifierAnalyzer:
             predictions = [int(x) for x in predictions]
             d = '{}_at_{}pct'.format(self.name, x)
             predictions_df[d] = predictions
-            predictions_df['truth'] = self.truth
             prec = precision(self.truth, predictions)
             rec = recall(self.truth, predictions)
             rv_dic[a] = [prec]

@@ -269,6 +269,8 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                     print('Error:',e)
                     continue
 
+    predictions['truth'] = list(y_test)
+
     return predictions, models, stats_df
 
 def model_analyzer_over_time(clfs, grid, plots, thresholds, list_of_x_train,
