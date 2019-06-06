@@ -27,15 +27,15 @@ def pipeline():
                                                  list_of_trainx,
                                                  list_of_trainy, list_of_testx,
                                                  list_of_testy)
-
+    '''
     count = 1
     for df in predictions:
         fname = "predictions" + str(count) + ".csv"
         df.to_csv(fname)
         count +=1 
-    metrics.to_csv("metrics.csv")    
+    metrics.to_csv("metrics.csv")
+    '''
     return predictions, models, metrics
-
 
 def add_acs_features(df):
     acs = pd.read_csv('all_acs_data.csv')
@@ -47,6 +47,8 @@ def add_acs_features(df):
     df = df.merge(acs, left_on=['ID_NUMBER', 'acs_year'], right_on=['ID_NUMBER',
                                                                        'year'] , how="left")
     df.drop('acs_year', axis=1, inplace=True)
+    df.fillna(0, inplace=True)
+
     return df
 
 def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
