@@ -6,6 +6,7 @@ import pandas as pd
 import combined_features_rachel as cf
 import model_analyzer as ma
 import ml_pipe as ml
+import new_pipe as nw
 import cleaners as cl
 import grids as g
 import sys

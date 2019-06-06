@@ -264,12 +264,6 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                     print(m.name)
                     m.plot_precision_recall(False, True, None)
                     m.plot_roc(False, True, None)
-                elif plots == 'save':
-                    m.plot_precision_recall(True, False, name + 'pr.png')
-                    m.plot_roc(True, False, name + 'roc.png')
-                elif plots == 'both':
-                    m.plot_precision_recall(True, True, name + 'pr.png')
-                    m.plot_roc(True, True, name + 'roc.png')
 
             except IndexError as e:
                     print('Error:',e)

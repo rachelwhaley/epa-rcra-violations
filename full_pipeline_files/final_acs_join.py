@@ -139,6 +139,8 @@ def go(acs_zips_csv,fac_path, shp_file,zip_to_zta_csv):
 
     for _, val in unique_cat.items():
         af.change_cat(entire_fac,val)
+        
+    entire_fac.to_csv('acs_joined.csv')
 
     return entire_fac
 

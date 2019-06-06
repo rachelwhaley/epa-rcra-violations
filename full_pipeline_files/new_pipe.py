@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import has_violation
 import epa_pipeline as ep
+import grids as gr
 import ml_pipe as ml
 
 def pipeline():
@@ -14,12 +15,30 @@ def pipeline():
     '''
     print("Creating dataframe")
     df = has_violation.go()
+    add_acs_features(df)
     print("Dataframe created")
     print("Creating temporal split")
     list_of_trainx, list_of_trainy, list_of_testx, list_of_testy, features = \
         temporal_split(df)
-    return ep.run_models('small', 'show', list_of_trainx, list_of_trainy,
-               list_of_testx, list_of_testy, features)
+    print("running models")
+    predictions, models, metrics = ep.run_models('small', 'show', [.8],
+                                                 list_of_trainx,
+                                                 list_of_trainy, list_of_testx,
+                                                 list_of_testy)
+
+    return predictions, models, metrics
+
+
+def add_acs_features(df):
+    acs = pd.read_csv('all_acs_data.csv')
+    acs['median income'].fillna(0, inplace=True)
+    acs['median income'] = acs['median income'].apply(lambda x: x if x > 0
+                                                         else 0)
+    df['acs_year'] = df['YEAR_EVALUATED'].where(df['YEAR_EVALUATED'] < 2017,
+                                                   2016)
+    df = df.merge(acs, left_on=['ID_NUMBER', 'acs_year'], right_on=['ID_NUMBER',
+                                                                       'year'])
+    df.drop('acs_year', axis=1, inplace=True)
 
 def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
     to_ignore=['ID_NUMBER'], variable='HasViolation'):
