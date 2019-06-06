@@ -353,13 +353,11 @@ def go():
     merge_date = 'DATE_TO_MERGE'
     evals_date = 'EVALUATION_START_DATE'
 
-    print("Importing")
     violations_df = pd.read_csv('RCRA_VIOLATIONS.csv')
     #violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
     evaluations_df = pd.read_csv('RCRA_EVALUATIONS.csv')
     snc_df = pd.read_csv('RCRA_VIOSNC_HISTORY.csv')
-    print("Creating dates")
     for df_col in [(violations_df, date), (violations_df, actual),\
         (violations_df, scheduled), (evaluations_df, evals_date)]:
         
@@ -372,7 +370,6 @@ def go():
         violations_df[comp_year])
     evaluations_df[eval_year] = evaluations_df[evals_date].apply(lambda x: x.year)
 
-    print("Making table with obvious features")
     has_vios_df, years = has_violation(facilities_df, violations_df)
 
     # print("Adding snc variables")
@@ -380,10 +377,8 @@ def go():
     # has_vios_df = pd.merge(has_vios_df, with_snc_df[[ids, "SNC_Count", "More_Recent_SNC_Yes"]], on=ids, how="left")
     # print(has_vios_df.head())
 
-    print("LQGs")
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[[ids, "IsLQG", "IsTSDF"]], on=ids, how="left")
-    print("Number of facilities")
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
     
@@ -398,11 +393,9 @@ def go():
 
     has_vios_df = has_vios_df.drop_duplicates(subset=[ids, eval_year])
 
-    print("Early and Late / Evaluations")
     late_early = pd.DataFrame()
     prev_evals = pd.DataFrame()
     for y in years:
-        print(y)
         vio_filt = violations_df[violations_df[comp_year] == (y - 1)]
         eval_filt = evaluations_df[evaluations_df[eval_year] == (y - 1)]
         max_date = datetime.datetime(y, 1, 1, 0, 0)
@@ -413,14 +406,12 @@ def go():
         late_early = pd.concat([late_early, vio_filt], ignore_index=True)
         prev_evals = pd.concat([prev_evals, eval_filt], ignore_index=True)
 
-    print("Merging")
     has_vios_df = pd.merge(has_vios_df,\
         late_early, left_on=[ids, eval_year],\
         right_on=[ids, merge_date], how="left").drop(columns=merge_date)
     has_vios_df = pd.merge(has_vios_df, prev_evals, left_on=[ids, eval_year],\
         right_on=[ids, merge_date], how="left").drop(columns=merge_date)
     
-    print("Cleaning")
     for col in list(has_vios_df.columns):
         if col.startswith('late') or col.startswith('early') or col.startswith('sum'):
             has_vios_df[col] = has_vios_df[col].fillna(value=0)
