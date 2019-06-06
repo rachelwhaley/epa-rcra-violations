@@ -90,7 +90,7 @@ def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
         testing_begins += period
 
     data = {'testing_year':begin_test, 'training_year':begin_train}
-    pd.Dataframe(data=data).to_csv('TRAIN_TEST_YEARS.csv')
+    pd.DataFrame(data=data).to_csv('TRAIN_TEST_YEARS.csv')
     return train_features, train_variable, test_features, test_variable, features
 
 def rank_classifiers(df,feat,criteria):
