@@ -15,14 +15,15 @@ def pipeline():
     '''
     print("Creating dataframe")
     #df = has_violation.go()
-    #add_acs_features(df)
+    
     df = pd.read_csv('FACILITIES_WITH_RCRA_FEATURES.csv')
+    df = add_acs_features(df)
     print("Dataframe created")
     print("Creating temporal split")
     list_of_trainx, list_of_trainy, list_of_testx, list_of_testy, features = \
         temporal_split(df)
     print("running models")
-    predictions, models, metrics = ep.run_models('small', 'show', [.8],
+    predictions, models, metrics = ep.run_models('small', None, [.8],
                                                  list_of_trainx,
                                                  list_of_trainy, list_of_testx,
                                                  list_of_testy)
@@ -44,9 +45,9 @@ def add_acs_features(df):
     df['acs_year'] = df['YEAR_EVALUATED'].where(df['YEAR_EVALUATED'] < 2017,
                                                    2016)
     df = df.merge(acs, left_on=['ID_NUMBER', 'acs_year'], right_on=['ID_NUMBER',
-                                                                       'year']) # , how="left")
+                                                                       'year'] , how="left")
     df.drop('acs_year', axis=1, inplace=True)
-    # return df
+    return df
 
 def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
     to_ignore=['ID_NUMBER'], variable='HasViolation'):
