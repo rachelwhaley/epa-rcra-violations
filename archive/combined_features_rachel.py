@@ -447,7 +447,6 @@ def snc_info(facilities_df, snc_df):
     # Drop the date columns before returning df
     facilities_df = facilities_df.drop(['MostRecentSNC_Y', 'MostRecentSNC_N'], axis=1)
 
-
     return facilities_df
 
 
