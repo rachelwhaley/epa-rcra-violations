@@ -72,15 +72,15 @@ def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
     test_features = []
     test_variable = []
 
-    begin_test = []
-    begin_train = []
+    #begin_test = []
+    #begin_train = []
 
     while (testing_begins + period) <= last:
         trains = df[(df[year_col] >= first) & (df[year_col] < training_ends)]
         tests = df[(df[year_col] >= testing_begins) & (df[year_col] <
             (testing_begins + period))]
-        begin_test.append(testing_begins)
-        begin_train.append(first)
+        #begin_test.append(testing_begins)
+        #begin_train.append(first)
         train_features.append(trains[features])
         train_variable.append(trains[variable])
         test_features.append(tests[features])
@@ -90,8 +90,8 @@ def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
         training_ends += period
         testing_begins += period
 
-    data = {'testing_year':begin_test, 'training_year':begin_train}
-    pd.DataFrame(data=data).to_csv('TRAIN_TEST_YEARS.csv')
+    #data = {'testing_year':begin_test, 'training_year':begin_train}
+    #pd.DataFrame(data=data).to_csv('TRAIN_TEST_YEARS.csv')
     return train_features, train_variable, test_features, test_variable, features
 
 def rank_classifiers(df,feat,criteria):
