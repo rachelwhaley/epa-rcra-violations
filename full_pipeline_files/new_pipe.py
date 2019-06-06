@@ -28,7 +28,7 @@ def pipeline():
 
     count = 1
     for df in predictions:
-        fname = "predictions" + str(counter) + ".csv"
+        fname = "predictions" + str(count) + ".csv"
         df.to_csv(fname)
         counter +=1 
     metrics.to_csv("metrics.csv")    
