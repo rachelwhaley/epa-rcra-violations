@@ -76,8 +76,8 @@ def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
     #clfs = g.clfstest #g.clfs0
     #grid = g.test0 #g.grid0
 
-    clfs = g.clfs0
-    grid = g.grid0
+    clfs = g.clfs1
+    grid = g.grid1
 
     predictions, models, metrics = ml.model_analyzer_over_time(clfs, grid,
                                                                plots, 

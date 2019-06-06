@@ -30,7 +30,6 @@ class ClassifierAnalyzer:
         self.truth = y_test
         self.t = thresholds
         self.metrics_matrix, self.predictions = self.make_prediction_matrix()
-        self.predictions['truth'] = self.truth.astype('int')
         self.roc_auc = None
 
     def __repr__(self):
