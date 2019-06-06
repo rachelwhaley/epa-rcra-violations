@@ -14,8 +14,9 @@ def pipeline():
     Goes from the beginning to the end of the pipeline
     '''
     print("Creating dataframe")
-    df = has_violation.go()
+    #df = has_violation.go()
     #add_acs_features(df)
+    df = pd.read_csv('FACILITIES_WITH_RCRA_FEATURES.csv')
     print("Dataframe created")
     print("Creating temporal split")
     list_of_trainx, list_of_trainy, list_of_testx, list_of_testy, features = \
