@@ -51,7 +51,7 @@ clfs = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
     'BAG': BaggingClassifier(DecisionTreeClassifier(), max_samples= 0.5, n_estimators = 20)
         }
 
-    large_grid = { 
+large_grid = { 
     'RF':{'n_estimators': [1,10,100,1000,10000], 'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'n_jobs': [-1]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10], 'solver': ['liblinear']},
     'SGD': { 'loss': ['hinge','log'], 'penalty': ['l2','l1','elasticnet']},
@@ -65,7 +65,7 @@ clfs = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
     'BAG': {'n_estimators' : [5,10, 20], 'max_samples' : [.25, .5, .75]}
        }
     
-    small_grid = { 
+small_grid = { 
     'RF':{'n_estimators': [10,100], 'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10], 'n_jobs': [-1]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.1,1,10], 'solver': ['liblinear']},
     'SGD': { 'loss': ['log'], 'penalty': ['l2','l1'], 'max_iter':[1000], 'tol':[1]},
@@ -79,7 +79,7 @@ clfs = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
     'BAG': {'n_estimators' : [5,10], 'max_samples' : [.25, .5] }
            }
     
-    test_grid = { 
+test_grid = { 
     'RF':{'n_estimators': [1], 'max_depth': [1], 'max_features': ['sqrt'],'min_samples_split': [10]},
     'LR': { 'penalty': ['l2'], 'C': [0.01]},
     'SGD': { 'loss': ['log'], 'penalty': ['l2']},
