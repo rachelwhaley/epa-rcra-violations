@@ -17,7 +17,7 @@ def pipeline():
     #df = has_violation.go()
     
     df = pd.read_csv('FACILITIES_WITH_RCRA_FEATURES.csv')
-    df = add_acs_features(df)
+    #df = add_acs_features(df)
     print("Dataframe created")
     print("Creating temporal split")
     list_of_trainx, list_of_trainy, list_of_testx, list_of_testy, features = \
