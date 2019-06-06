@@ -15,7 +15,7 @@ def pipeline():
     '''
     print("Creating dataframe")
     df = has_violation.go()
-    df = add_acs_features(df)
+    add_acs_features(df)
     print("Dataframe created")
     print("Creating temporal split")
     list_of_trainx, list_of_trainy, list_of_testx, list_of_testy, features = \
@@ -37,9 +37,9 @@ def add_acs_features(df):
     df['acs_year'] = df['YEAR_EVALUATED'].where(df['YEAR_EVALUATED'] < 2017,
                                                    2016)
     df = df.merge(acs, left_on=['ID_NUMBER', 'acs_year'], right_on=['ID_NUMBER',
-                                                                       'year'], how="left")
+                                                                       'year']) # , how="left")
     df.drop('acs_year', axis=1, inplace=True)
-    return df
+    # return df
 
 def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
     to_ignore=['ID_NUMBER'], variable='HasViolation'):
