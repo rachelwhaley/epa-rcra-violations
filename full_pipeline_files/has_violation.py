@@ -420,6 +420,7 @@ def go():
 
     # print("Writing to csv")
     # has_vios_df.to_csv("has_violations_features.csv")
+    
     return has_vios_df
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ def pipeline():
     '''
     print("Creating dataframe")
     df = has_violation.go()
-    add_acs_features(df)
+    #add_acs_features(df)
     print("Dataframe created")
     print("Creating temporal split")
     list_of_trainx, list_of_trainy, list_of_testx, list_of_testy, features = \
