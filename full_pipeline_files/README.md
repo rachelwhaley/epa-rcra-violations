@@ -17,9 +17,6 @@ Files:
 - `acs_implementation.py`
 - `acs_implementation_facs.py`
 - `cleaners.py`
-- `combined_features.py` -> move to archive
-- `combined_features_rachel.py` -> move to archive
-- `ee_features.py` -> move to archive
 - `epa_pipeline.py`
 - `epa_predictions.ipynb` -> are we still using this?
 - `explore.py` -> move to archive
