@@ -8,6 +8,7 @@ import datetime
 import cleaners
 import numpy as np
 
+
 def has_violation(facilities_df, violations_df, start_year=2011, end_year=2018):
     '''
     facilities: list of facilities we want to know whether or not they have had a violation
@@ -292,6 +293,55 @@ def type_waste(facilities_df):
         
     return facilities_with_features_df.drop(columns=[waste_codes, code_owner, zips, naics, states, ids_waste])
 
+
+def snc_info(facilities_df, snc_df):
+    """Adds columns for info about SNC status."""
+    # TODO: Need to add ANY SNC in time period
+
+    year = facilities_df['YEAR_EVALUATED']
+    # filter snc for just that facility,
+
+    # create snc year column and filter out everything before 2011
+    snc_df["YEAR"] = snc_df["YRMONTH"].str[:4].astype(int)
+    snc_df = snc_df[snc_df["YEAR"] >= 2011]
+
+    # filter out everything before 2011
+
+    snc_df["SNC_Y"] = np.where(snc_df.SNC_FLAG.str.contains("Y"), 1, 0)
+    snc_df["SNC_N"] = pd.Series(np.where(snc_df.SNC_FLAG.str.contains("N"), 1, 0), snc_df.index)
+
+    snc_y = snc_df[snc_df['SNC_Y'] == 1]
+    snc_n = snc_df[snc_df['SNC_N'] == 1]
+
+    snc_count = snc_y.groupby("ID_NUMBER").size().reset_index().rename(columns={
+        0: 'SNC_Count'}).sort_values("SNC_Count", ascending=False)
+
+    facilities_df = pd.merge(facilities_df, snc_count, on="ID_NUMBER", how="left")
+    facilities_df["SNC_Count"].fillna(0, inplace=True)
+
+    # Find the most recent dates the facility was designated an SNC, Y or N
+    max_date_y = snc_y.groupby("ID_NUMBER").agg({'YRMONTH': max})[
+        ['YRMONTH']].reset_index().rename(columns={'YRMONTH': 'MostRecentSNC_Y'})
+
+    max_date_n = snc_n.groupby("ID_NUMBER").agg({'YRMONTH': 'max'})[
+        ['YRMONTH']].reset_index().rename(columns={'YRMONTH': 'MostRecentSNC_N'})
+
+    facilities_df = pd.merge(facilities_df, max_date_y, on='ID_NUMBER', how='left')
+    facilities_df = pd.merge(facilities_df, max_date_n, on='ID_NUMBER', how='left')
+
+    facilities_df["MostRecentSNC_Y"] = pd.to_datetime(facilities_df["MostRecentSNC_Y"],
+                                                               format='%Y%m', errors='coerce')
+    facilities_df["MostRecentSNC_N"] = pd.to_datetime(facilities_df["MostRecentSNC_N"],
+                                                   format='%Y%m', errors='coerce')
+
+    facilities_df["More_Recent_SNC_Yes"] = np.where((facilities_df['MostRecentSNC_Y'] >= facilities_df['MostRecentSNC_N']), 1, 0)
+
+    # Drop the date columns before returning df
+    facilities_df = facilities_df.drop(['MostRecentSNC_Y', 'MostRecentSNC_N'], axis=1)
+
+    return facilities_df
+
+
 def go():
     
     ids = 'ID_NUMBER'
@@ -308,6 +358,7 @@ def go():
     #violations_df = cleaners.clean_and_converttodatetime_slashes(violations_df, date, datetime.datetime(2000,1,1,0,0))
     facilities_df = pd.read_csv('RCRA_FACILITIES.csv')
     evaluations_df = pd.read_csv('RCRA_EVALUATIONS.csv')
+    snc_df = pd.read_csv('RCRA_VIOSNC_HISTORY.csv')
     print("Creating dates")
     for df_col in [(violations_df, date), (violations_df, actual),\
         (violations_df, scheduled), (evaluations_df, evals_date)]:
@@ -324,6 +375,11 @@ def go():
     print("Making table with obvious features")
     has_vios_df, years = has_violation(facilities_df, violations_df)
 
+    print("Adding snc variables")
+    with_snc_df = snc_info(facilities_df, snc_df)
+    has_vios_df = pd.merge(has_vios_df, with_snc_df[[ids, "SNC_Count", "More_Recent_SNC_Yes"]], on=ids, how="left")
+    print(has_vios_df.head())
+
     print("LQGs")
     with_lqgs = flag_lqg(facilities_df)
     has_vios_df = pd.merge(has_vios_df, with_lqgs[[ids, "IsLQG", "IsTSDF"]], on=ids, how="left")
@@ -331,14 +387,14 @@ def go():
     num_facs = num_facilities(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs[[ids, "NumInMyState","NumInMyZIP"]], on=ids, how="left")
     
-    '''
+    """
     !!!WE NEED TO GET THIS WORKING OR SCRAP IT!!!
     print("Waste Codes")
     facs_waste = type_waste(facilities_df)
     has_vios_df = pd.merge(has_vios_df, num_facs, on=ids, how="left")
 
     return has_vios_df
-    '''
+    """
 
     has_vios_df = has_vios_df.drop_duplicates(subset=[ids, eval_year])
 
@@ -371,6 +427,8 @@ def go():
         elif col.startswith('last'):
             has_vios_df[col] = has_vios_df[col].fillna(value=-1)
 
+    # print("Writing to csv")
+    # has_vios_df.to_csv("has_violations_features.csv")
     return has_vios_df
 
 if __name__ == "__main__":
