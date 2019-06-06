@@ -1,5 +1,7 @@
 ## README (Group 13)
 
+To run the full pipeline: `python3 ???`
+
 Pipeline workflow: -> is this still up to date?
 
 - Clean the data:
@@ -16,13 +18,11 @@ Files:
 - `acs_implementation_facs.py`
 - `cleaners.py`
 - `combined_features.py` -> move to archive
-- `combined_features_rachel.py`
+- `combined_features_rachel.py` -> move to archive
 - `ee_features.py` -> move to archive
 - `epa_pipeline.py`
 - `epa_predictions.ipynb` -> are we still using this?
-- `evals_small.csv` -> move to data folder
 - `explore.py` -> move to archive
-- `facilities_small.csv `-> move to data folder
 - `final_acs_join.py`
 - `graphs for writeup.ipynb`
 - `has_violation.py`
@@ -32,5 +32,3 @@ Files:
 - `new_pipe.py`
 - `pipeline_library.py` -> are we still using this?
 - `rcra_downloads.zip` -> move to data folder
-- `snc_small.csv` -> move to data folder
-- `violations_small.csv` -> move to data folder
