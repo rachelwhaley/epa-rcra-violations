@@ -26,6 +26,12 @@ def pipeline():
                                                  list_of_trainy, list_of_testx,
                                                  list_of_testy)
 
+    count = 1
+    for df in predictions:
+        fname = "predictions" + str(counter) + ".csv"
+        df.to_csv(fname)
+        counter +=1 
+    metrics.to_csv("metrics.csv")    
     return predictions, models, metrics
 
 
