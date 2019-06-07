@@ -1,4 +1,5 @@
 import pandas as pd
+from collections import OrderedDict
 
 '''
 cleaning functions for the epa pipeline
@@ -25,10 +26,12 @@ def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
     '''
     oor_dict = {'19': 2000, '1919': 100, '1943': 50, '1971': 20, '1974': 20,
                '1979': 18}
+    oor_dict = OrderedDict(oor_dict)
+
     df[['M','D','Y']] = df[stand_form_col].str.split(pat='/', expand=True)
     df['Y'] = df.Y.astype(int)
 
-    
+
     for key, value in oor_dict.items():
         k = int(key)
         if k < 1943:
@@ -40,7 +43,6 @@ def clean_and_converttodatetime_slashes(df, stand_form_col, start_date):
     df[stand_form_col] = df[stand_form_col].astype('datetime64')
     df.drop(['M','D','Y'], axis=1, inplace=True)
     start_date=pd.to_datetime(start_date)
-    print(df[stand_form_col].dtype)
 
     return df[(df[stand_form_col] > start_date)]
 

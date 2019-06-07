@@ -80,11 +80,6 @@ class ClassifierAnalyzer:
         ax2.set_ylabel('recall', color='r')
         ax1.set_ylim([0,1])
         ax2.set_xlim([0,1])
-
-        plt.title(name)
-        if save == True:
-            plt.savefig('plots/' + name + '.png')
-            plt.close()
         if show == True:
             plt.show()
             plt.close()
@@ -101,9 +96,6 @@ class ClassifierAnalyzer:
         plt.ylabel('True Positive Rate')
         plt.title(name)
         plt.legend(loc="lower right")
-        if save == True:
-            plt.savefig('plots/' + name + '.png')
-            plt.close()
         if show == True:
             plt.show()
             plt.close()
