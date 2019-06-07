@@ -18,12 +18,13 @@ def pipeline():
     
     #df = pd.read_csv('FACILITIES_WITH_RCRA_FEATURES.csv')
     #df = add_acs_features(df)
+    df = pd.read_csv('small_data_cleaned.csv')
     print("Dataframe created")
     print("Creating temporal split")
     list_of_trainx, list_of_trainy, list_of_testx, list_of_testy, features = \
         temporal_split(df)
     print("running models")
-    predictions, models, metrics = ep.run_models('small', None, [.8],
+    predictions, models, metrics = ep.run_models('small', 'save', [.8],
                                                  list_of_trainx,
                                                  list_of_trainy, list_of_testx,
                                                  list_of_testy)
