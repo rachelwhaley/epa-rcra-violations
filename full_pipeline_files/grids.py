@@ -7,28 +7,49 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.svm import SVC
 
+'''
+HW for 6/6
+'''
+
+grid_dave = {
+    'RF':{'n_estimators': [10000], 'max_depth': [100,50,5,1],
+          'max_features': ['sqrt','log2'],'min_samples_split': [5, 10], 'n_jobs': [-1]}
+            }
+
+clfs_dave =  {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1)}
+
+grid_esther = {'RF':{'n_estimators': [1,1000] 'max_depth': [1,5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10], 'n_jobs': [-1]}
+              }
+
+clfs_esther = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1)}
+
+grid_rachel = {'RF':{'n_estimators': [1,1000], 'max_depth': [100], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10], 'n_jobs': [-1]},
+               'DT': {'criterion': ['gini'], 'max_depth': [1, 2, 5, 10],'min_samples_split': [5,10, 50]}
+              }
+
+clfs_rachel = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
+        'DT': DecisionTreeClassifier()}
+
+
+grid_carla = {'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10],
+                     'solver': ['liblinear']}}
+
+clfs_carla = {'LR': LogisticRegression(penalty='l2', C=1e5, solver='lbfgs')}
+'''
+other grids below here
+'''
+
 test0 = {'DT': {'criterion':['gini'], 'max_depth':[1], 'min_samples_split':[25]}}
 clfstest = {'DT': DecisionTreeClassifier()}
 
+#this grid is made up of the models we run in our hw grids
 test1 = {'DT': {'criterion': ['gini'], 'max_depth': [1, 2, 5, 10],'min_samples_split': [5,10, 50]},
         'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10], 'solver': ['liblinear']},
         'RF':{'n_estimators': [1,1000,10000], 'max_depth': [1,5,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10], 'n_jobs': [-1]}}
 
 GB_grid = {'GB': {'n_estimators': [10,100], 'learning_rate' : [0.5],'subsample' : [0.5,1.0], 'max_depth':           [5]}}
+GB_clfs = {'GB': GradientBoostingClassifier(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10)}
 
-grid0 = {
-    'RF':{'n_estimators': [25], 'max_depth': [10], 'max_features': ['auto'],'min_samples_split': [10], 'n_jobs': [-1]},
-    'DT': {'criterion': ['gini'], 'max_depth': [5, 25],'min_samples_split': [2]},
-    'AB': { 'algorithm': ['SAMME'], 'n_estimators': [25]}
-    }
-clfs0 =  {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
-        'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200),
-        'DT': DecisionTreeClassifier()
-            }
-
-clfs1 = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
-        'DT': DecisionTreeClassifier(),
-        'BAG': BaggingClassifier(DecisionTreeClassifier(), max_samples= 0.5, n_estimators = 20)}
 
 
 grid1 = {
@@ -48,8 +69,9 @@ grid3 = {
     'SVM' :{'C' :[0.1],'kernel':['linear']},
     'BAG': {'n_estimators' : [5,10], 'max_samples' : [.25, .5] }
     }
-
-
+'''
+Rayid's Grids:
+'''
 clfs = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
     'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1, criterion='entropy'),
     'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200),
