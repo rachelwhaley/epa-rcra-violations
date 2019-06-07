@@ -18,7 +18,7 @@ grid_dave = {
 
 clfs_dave =  {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1)}
 
-grid_esther = {'RF':{'n_estimators': [1,1000] 'max_depth': [1,5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10], 'n_jobs': [-1]}
+grid_esther = {'RF':{'n_estimators': [1,1000], 'max_depth': [1,5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10], 'n_jobs': [-1]}
               }
 
 clfs_esther = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1)}
