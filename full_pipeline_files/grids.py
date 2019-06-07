@@ -50,7 +50,22 @@ test1 = {'DT': {'criterion': ['gini'], 'max_depth': [1, 2, 5, 10],'min_samples_s
 GB_grid = {'GB': {'n_estimators': [10,100], 'learning_rate' : [0.5],'subsample' : [0.5,1.0], 'max_depth':           [5]}}
 GB_clfs = {'GB': GradientBoostingClassifier(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10)}
 
-
+grid_esther_2 = { 
+    'SGD': { 'loss': ['hinge','log'], 'penalty': ['l2','l1','elasticnet']},
+    'ET': { 'n_estimators': [1,10,100,1000,10000], 'criterion' : ['gini', 'entropy'] ,'max_depth': [1,5,10,20,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,5,10], 'n_jobs': [-1]},
+    'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000]},
+    'NB' : {},
+    'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10],'kernel':['linear']},
+    'BAG': {'n_estimators' : [5,10, 20], 'max_samples' : [.25, .5, .75]}
+       }
+clfs_esther_2 = {
+    'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1, criterion='entropy'),
+    'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200),
+    'SVM': SVC(kernel='linear', probability=True, random_state=0),
+    'NB': GaussianNB(),
+    'SGD': SGDClassifier(loss="log", penalty="l2"),
+    'BAG': BaggingClassifier(DecisionTreeClassifier(), max_samples= 0.5, n_estimators = 20)
+        }
 
 grid1 = {
     'RF':{'n_estimators': [10], 'max_depth': [5], 'max_features': ['sqrt'],'min_samples_split': [10]},
