@@ -83,6 +83,9 @@ class ClassifierAnalyzer:
         if show == True:
             plt.show()
             plt.close()
+        if save == True:
+            plt.savefig("precision_recall_" + str(name) + '.png')
+            plt.close()
 
     def plot_roc(self, save, show, name):
         fpr, tpr, thresholds = roc_curve(self.truth, self.scores)
@@ -99,6 +102,10 @@ class ClassifierAnalyzer:
         if show == True:
             plt.show()
             plt.close()
+        if save == True:
+            plt.savefig("roc_auc_" + str(name)+'.png')
+            plt.close()
+
 def classify(x_train, y_train, x_test, classifier):
     '''
     from rachel's pipeline_library
