@@ -9,7 +9,7 @@ import epa_pipeline as ep
 import grids as gr
 import ml_pipe as ml
 
-def pipeline():
+def pipeline(predictions_filename, metrics_filename):
     '''
     Goes from the beginning to the end of the pipeline
     '''
@@ -17,7 +17,7 @@ def pipeline():
     #df = has_violation.go()
     
     df = pd.read_csv('FACILITIES_WITH_RCRA_FEATURES.csv')
-    #df = add_acs_features(df)
+    df = add_acs_features(df)
     print("Dataframe created")
     print("Creating temporal split")
     list_of_trainx, list_of_trainy, list_of_testx, list_of_testy, features = \
@@ -27,15 +27,11 @@ def pipeline():
                                                  list_of_trainx,
                                                  list_of_trainy, list_of_testx,
                                                  list_of_testy)
-    '''
-    count = 1
-    for df in predictions:
-        fname = "predictions" + str(count) + ".csv"
-        df.to_csv(fname)
-        count +=1 
-    metrics.to_csv("metrics.csv")
-    '''
-    return predictions, models, metrics
+    p = pd.concat(predictions, axis=0)
+    p.to_csv(predictions_filename)
+    metrics.to_csv(metrics_filename)
+
+    return predictions, models, metrics, features
 
 def add_acs_features(df):
     acs = pd.read_csv('all_acs_data.csv')
