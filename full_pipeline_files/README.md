@@ -29,3 +29,10 @@ Files:
 - `new_pipe.py`
 - `pipeline_library.py` -> are we still using this?
 - `rcra_downloads.zip` -> move to data folder
+
+Test Phase 1 Use Instruction:
+input grid of your choice into run_models() function in epa_pipeline.py
+point pipeline() function from new_pipe.py to csv of your choice
+
+run:
+ipython3 new_pipe.py
