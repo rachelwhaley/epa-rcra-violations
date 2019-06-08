@@ -29,8 +29,8 @@ def pipeline():
                                                  list_of_trainy, list_of_testx,
                                                  list_of_testy)
     p = pd.concat(predictions, axis=0)
-    p.to_csv('esther_2_predictions.csv')
-    metrics.to_csv('esther_2_metrics.csv')
+    p.to_csv('tenthouRF_predictions.csv')
+    metrics.to_csv('tenthouRF_metrics.csv')
 
     return predictions, models, metrics, features
 
