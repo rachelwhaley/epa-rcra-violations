@@ -257,7 +257,7 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                 m = ma.ClassifierAnalyzer(model, p, name, thresholds,
                                             plots, x_train, y_train, x_test,
                                             y_test)
-                m.predictions['scores'] = m.scores
+                m.predictions['scores' + str(p)] = m.scores
                 predictions = pd.concat([predictions, m.predictions], axis=1)
                 stats_df = pd.concat([stats_df, m.metrics_matrix], axis=0)
                 models.append(m)
