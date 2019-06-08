@@ -1,38 +1,15 @@
 ## README (Group 13)
 
-To run the full pipeline: `python3 ???`
-
-Pipeline workflow: -> is this still up to date?
-
-- Clean the data:
-- Splits data into training and testing sets: `new_pipe.py`
-- Generates Features: `has_violation.py`
-- Evaluates Models: `model_analyzer.py`
-- Runs Models: `new_pipe.py`
-- Returns list of facilities ordered by score from model:
+To run the full pipeline: `python3 new_pipe.py`
 
 Files:
 
-- `acs_features.py` 
-- `acs_implementation.py`
-- `acs_implementation_facs.py`
-- `cleaners.py`
-- `epa_pipeline.py`
-- `epa_predictions.ipynb` -> are we still using this?
-- `explore.py` -> move to archive
-- `final_acs_join.py`
-- `graphs for writeup.ipynb`
-- `has_violation.py`
-- `manual_implementation_acs.py` -> are we still using this?
-- `ml_pipe.py`
-- `model_analyzer.py`
-- `new_pipe.py`
-- `pipeline_library.py` -> are we still using this?
-- `rcra_downloads.zip` -> move to data folder
+- `cleaners.py` : used to clean csv data
+- `grids.py` : collection of model parameters
+- `epa_pipeline.py` : helper functions for pipeline
+- `final_acs_join.py` : merges ACS features to RCRA features
+- `has_violation.py` : creates RCRA features dataframe
+- `ml_pipe.py` : helper functions for pipeline
+- `model_analyzer.py` : functions for analyzing models
+- `new_pipe.py` : runs the pipeline
 
-Test Phase 1 Use Instruction:
-input grid of your choice into run_models() function in epa_pipeline.py
-point pipeline() function from new_pipe.py to csv of your choice
-
-run:
-ipython3 new_pipe.py
