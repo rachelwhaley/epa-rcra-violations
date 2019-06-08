@@ -29,8 +29,8 @@ def pipeline():
                                                  list_of_trainy, list_of_testx,
                                                  list_of_testy)
     p = pd.concat(predictions, axis=0)
-    p.to_csv('predictions.csv')
-    metrics.to_csv('metrics.csv')
+    p.to_csv('esther_2_predictions.csv')
+    metrics.to_csv('esther_2_metrics.csv')
 
     return predictions, models, metrics, features
 
@@ -49,7 +49,8 @@ def add_acs_features(df):
     return df
 
 def temporal_split(df, year_col='YEAR_EVALUATED', period=1, holdout=1,\
-    to_ignore=['ID_NUMBER'], variable='HasViolation'):
+    to_ignore=['ID_NUMBER', 'Unnamed: 0', 'Unnamed: 0_x', 'Unnamed: 0_y', 'year'],\
+    variable='HasViolation'):
     '''
     Splits time by year
 
