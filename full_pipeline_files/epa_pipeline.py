@@ -74,8 +74,8 @@ def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
     models on grid on all
     '''
 
-    clfs = g.GB_clfs
-    grid = g.GB_grid
+    clfs = g.clfstest
+    grid = g.test0
 
     predictions, models, metrics = ml.model_analyzer_over_time(clfs, grid,
                                                                plots, 
@@ -85,12 +85,12 @@ def run_models(grid_size, plots, thresholds, list_of_trainx, list_of_trainy,
                                                                list_of_testx,
                                                                list_of_testy)
 
-    master_metrics = pd.DataFrame(columns=list(metrics[0].columns))
+    for i, df in enumerate(metrics):
+        df['time_period'] = i
 
-    for df in metrics:
-        master_metrics = pd.concat([master_metrics, df], axis=0)
+    master_metrics = pd.concat(metrics, axis=0)
 
-    return predictions, models, nw.rank(master_metrics, 'model', 'precision_0.2pct')
+    return predictions, models, master_metrics
 
 def main():
     """
