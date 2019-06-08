@@ -69,18 +69,10 @@ clfs_esther_2 = {
         }
 
 SVM_GRID = {
-    'ET': { 'n_estimators': [1,1000,10000], 'criterion' : ['gini'] ,'max_depth': [1,50,100], 'min_samples_split': [2,5,10], 'n_jobs': [-1]},
-    'AB': { 'n_estimators': [1,100,1000]},
-    'NB' : {},
     'SVM' :{'C' :[0.00001,0.001,0.1,1,10],'kernel':['linear']},
-    'BAG': {'n_estimators' : [5,10, 20], 'max_samples' : [.25, .5, .75]}
        }
 SVM_CLFS = {
-    'ET': ExtraTreesClassifier(n_estimators=10, n_jobs=-1, criterion='entropy'),
-    'AB': AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200),
     'SVM': SVC(kernel='linear', probability=True, random_state=0),
-    'NB': GaussianNB(),
-    'BAG': BaggingClassifier(DecisionTreeClassifier(), max_samples= 0.5, n_estimators = 20)
         }
 
 grid1 = {
