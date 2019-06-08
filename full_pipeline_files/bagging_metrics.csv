@@ -1,0 +1,6 @@
+,precision_0.2pct,recall_0.2pct,f1_0.2pct,model,time_period
+0,0.2412420382165605,0.30119284294234594,0.26790450928381965,"DT{'criterion': 'gini', 'max_depth': 1, 'min_samples_split': 25}",0
+0,0.2711864406779661,0.3154929577464789,0.2916666666666667,"DT{'criterion': 'gini', 'max_depth': 1, 'min_samples_split': 25}",1
+0,0.26262626262626265,0.31947069943289225,0.288272921108742,"DT{'criterion': 'gini', 'max_depth': 1, 'min_samples_split': 25}",2
+0,0.2673841059602649,0.3275862068965517,0.2944393801276208,"DT{'criterion': 'gini', 'max_depth': 1, 'min_samples_split': 25}",3
+0,0.2592295345104334,0.3188548864758144,0.28596724214254093,"DT{'criterion': 'gini', 'max_depth': 1, 'min_samples_split': 25}",4
