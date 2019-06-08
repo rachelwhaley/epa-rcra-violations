@@ -18,6 +18,11 @@ grid_dave = {
 
 clfs_dave =  {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1)}
 
+grid_dave_2 = {'BAG': {'n_estimators' : [5,10, 20], 'max_samples' : [.25, .5, .75]}}
+
+clfs_dave_2 = {'BAG': BaggingClassifier(DecisionTreeClassifier(),
+                                        max_samples= 0.5, n_estimators = 20)}
+
 grid_esther = {'RF':{'n_estimators': [1,1000], 'max_depth': [1,5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10], 'n_jobs': [-1]}
               }
 
