@@ -273,6 +273,7 @@ def model_analyzer(clfs, grid, plots, thresholds, x_train, y_train, x_test, y_te
                     continue
 
     predictions['truth'] = list(y_test)
+    predictions['scores'] = list(self.scores)
 
     return predictions, models, stats_df
 
