@@ -12,4 +12,5 @@ Files:
 - `has_violation.py` : creates RCRA features dataframe
 - `ml_pipe.py` : helper functions for pipeline
 - `model_analyzer.py` : functions for analyzing models
-- `new_pipe.py` : runs the pipeline
+- `new_pipe.py` : runs the pipeline  
+- `pipeline for latest results.ipynb` : runs the new pipeline analysis
